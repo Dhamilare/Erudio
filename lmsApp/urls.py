@@ -45,5 +45,20 @@ urlpatterns = [
 
     # --- CERTIFICATE URL ---
     path('enrollment/<int:enrollment_id>/send-certificate/', views.resend_certificate_view, name='send_certificate'),
+
+    # --- "ERUDIO FOR BUSINESS" URLs ---
+    path('business/', views.for_business_view, name='for_business'),
+    path('business/subscribe/<int:plan_id>/', views.initiate_team_subscription_view, name='initiate_team_subscription'),
+    path('business/verify-subscription/', views.verify_team_subscription_view, name='verify_team_subscription'),
+    path('business/setup-team/', views.team_setup_view, name='team_setup'),
+    path('team/dashboard/', views.team_dashboard_view, name='team_dashboard'),
+    path('team/remove-member/<int:member_id>/', views.remove_team_member_view, name='remove_team_member'),
+
+    # --- SUPER ADMIN URLs ---
+    path('dashboard/', views.super_admin_dashboard_view, name='super_admin_dashboard'),
+    path('plans/', views.plan_management_view, name='plan_management'),
+    path('api/plans/<int:plan_id>/', views.plan_detail_view, name='plan_detail'),
+    path('api/plans/<int:plan_id>/update/', views.plan_update_view, name='plan_update'),
+    path('api/plans/<int:plan_id>/delete/', views.plan_delete_view, name='plan_delete'),
 ]
 

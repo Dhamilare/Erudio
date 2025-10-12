@@ -102,3 +102,17 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ('student__email', 'reference')
     readonly_fields = ('created_at',)
 
+
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    """Admin interface for managing B2B subscription plans."""
+    list_display = ('name', 'price', 'max_members')
+    search_fields = ('name',)
+
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
+    """Admin interface for viewing and managing business teams."""
+    list_display = ('name', 'owner', 'plan', 'is_active', 'subscription_ends')
+    list_filter = ('plan', 'is_active')
+    search_fields = ('name', 'owner__email')
+    autocomplete_fields = ['owner', 'members']

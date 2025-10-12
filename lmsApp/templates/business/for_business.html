@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Erudio for Business - Pricing{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:flex-col sm:align-center">
+            <h1 class="text-5xl font-extrabold text-gray-900 sm:text-center">Pricing Plans</h1>
+            <p class="mt-5 text-xl text-gray-500 sm:text-center">Invest in your team's success with a plan that fits your organization's needs.</p>
+        </div>
+
+        <div class="mt-12 space-y-4 sm:mt-16 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0 xl:grid-cols-3">
+            
+            {% for plan in plans %}
+            <div class="border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200">
+                <div class="p-6">
+                    <h2 class="text-lg leading-6 font-medium text-gray-900">{{ plan.name }}</h2>
+                    <p class="mt-2 text-sm text-gray-500">{{ plan.description|default:"The perfect plan to get started." }}</p>
+                    <p class="mt-4">
+                        <span class="text-4xl font-extrabold text-gray-900">₦{{ plan.price|intcomma }}</span>
+                        <span class="text-base font-medium text-gray-500">/month</span>
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500">Up to {{ plan.max_members }} users</p>
+                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'initiate_team_subscription' plan.id %}" class="mt-6 block w-full bg-indigo-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-indigo-700">Choose Plan</a>
+                    {% else %}
+                        <a href="{% url 'login' %}?next={% url 'for_business' %}" class="mt-6 block w-full bg-indigo-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-indigo-700">Login to Subscribe</a>
+                    {% endif %}
+                </div>
+                <div class="pt-6 pb-8 px-6">
+                    <h3 class="text-xs font-medium text-gray-900 tracking-wide uppercase">What's included</h3>
+                    <ul role="list" class="mt-6 space-y-4">
+                        {% for feature in plan.feature_list %}
+                        <li class="flex space-x-3">
+                            <i class="fas fa-check-circle flex-shrink-0 h-5 w-5 text-green-500"></i>
+                            <span class="text-sm text-gray-500">{{ feature }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Enterprise Plan (Static Card) -->
+            <div class="border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200">
+                <div class="p-6">
+                    <h2 class="text-lg leading-6 font-medium text-gray-900">Enterprise</h2>
+                    <p class="mt-2 text-sm text-gray-500">For large organizations with custom needs.</p>
+                    <p class="mt-4 text-4xl font-extrabold text-gray-900">Let's Talk</p>
+                    <p class="mt-1 text-sm text-gray-500">Custom users & pricing</p>
+                    <a href="mailto:sales@erudio.com" class="mt-6 block w-full bg-gray-800 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-gray-900">Contact Sales</a>
+                </div>
+                <div class="pt-6 pb-8 px-6">
+                    <h3 class="text-xs font-medium text-gray-900 tracking-wide uppercase">Everything in Business, plus</h3>
+                    <ul role="list" class="mt-6 space-y-4">
+                        <li class="flex space-x-3"><i class="fas fa-check-circle flex-shrink-0 h-5 w-5 text-green-500"></i><span class="text-sm text-gray-500">Advanced analytics & reporting</span></li>
+                        <li class="flex space-x-3"><i class="fas fa-check-circle flex-shrink-0 h-5 w-5 text-green-500"></i><span class="text-sm text-gray-500">Single Sign-On (SSO) integration</span></li>
+                        <li class="flex space-x-3"><i class="fas fa-check-circle flex-shrink-0 h-5 w-5 text-green-500"></i><span class="text-sm text-gray-500">Dedicated customer success manager</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -31,6 +31,16 @@ def instructor_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
+def superuser_required(view_func):
+    """Decorator for views that checks that the user is logged in and is a superuser."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            messages.error(request, "You do not have permission to access this page.")
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
 # --- CORE & AUTHENTICATION VIEWS ---
 
 def home_view(request):
@@ -521,6 +531,72 @@ def category_delete_view(request, category_id):
         category.delete()
 
 
+@superuser_required
+def super_admin_dashboard_view(request):
+    """
+    Calculates and displays sitewide analytics for the super admin.
+    """
+    # --- KPI Calculations ---
+    total_users = CustomUser.objects.count()
+    total_students = CustomUser.objects.filter(is_instructor=False, is_superuser=False).count()
+    total_instructors = CustomUser.objects.filter(is_instructor=True).count()
+    total_courses = Course.objects.count()
+    total_enrollments = Enrollment.objects.count()
+    total_revenue = Transaction.objects.filter(status='success').aggregate(total=Sum('amount'))['total'] or 0.00
+    total_teams = Team.objects.count()
+
+    # --- Chart Data: New Users in the last 6 months ---
+    now = timezone.now()
+    six_months_ago = now - datetime.timedelta(days=180)
+    
+    # 1. Get the raw data from the database
+    user_data = CustomUser.objects.filter(
+        date_joined__gte=six_months_ago
+    ).annotate(
+        month=TruncMonth('date_joined')
+    ).values('month').annotate(count=Count('id')).order_by('month')
+
+    # 2. Create a simple map of the data for easy lookup
+    # The key is now a simple 'YYYY-MM' string, which avoids all date/datetime issues.
+    data_map = {item['month'].strftime('%Y-%m'): item['count'] for item in user_data}
+
+    # 3. Generate the labels and values for the last 6 months in chronological order.
+    chart_labels = []
+    chart_values = []
+    for i in range(5, -1, -1): # Loop backwards from 5 down to 0
+        # Calculate the correct month and year for the last 6 months
+        month_offset = now.month - i
+        year_offset = now.year
+        if month_offset <= 0:
+            month_offset += 12
+            year_offset -= 1
+        
+        month_date = datetime.date(year_offset, month_offset, 1)
+        
+        # Format the label (e.g., "Oct 2025") and the lookup key (e.g., "2025-10")
+        label = month_date.strftime('%b %Y')
+        key = month_date.strftime('%Y-%m')
+        
+        # Get the value from our data map, defaulting to 0 if no users signed up in that month.
+        value = data_map.get(key, 0)
+        
+        chart_labels.append(label)
+        chart_values.append(value)
+
+    # --- Recent Activity Lists ---
+    recent_users = CustomUser.objects.order_by('-date_joined')[:5]
+    recent_transactions = Transaction.objects.filter(status='success').select_related('student', 'course').order_by('-created_at')[:5]
+    recent_teams = Team.objects.select_related('owner', 'plan').order_by('-created_at')[:5]
+
+    context = {
+        'total_users': total_users, 'total_students': total_students, 'total_instructors': total_instructors,
+        'total_courses': total_courses, 'total_enrollments': total_enrollments, 'total_revenue': total_revenue,
+        'total_teams': total_teams, 'recent_users': recent_users, 'recent_transactions': recent_transactions,
+        'recent_teams': recent_teams, 'chart_labels': chart_labels, 'chart_values': chart_values,
+    }
+    return render(request, 'admin/dashboard.html', context)
+
+
 @login_required
 def account_settings_view(request):
     user = request.user
@@ -617,3 +693,239 @@ def resend_certificate_view(request, enrollment_id):
             return JsonResponse({'status': 'error', 'message': 'You have not completed this course yet.'}, status=400)
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+
+def for_business_view(request):
+    """
+    Displays the 'For Business' pricing page with available subscription plans.
+    """
+    plans = SubscriptionPlan.objects.all().order_by('price')
+    context = {'plans': plans}
+    return render(request, 'business/for_business.html', context)
+
+
+@login_required
+def team_setup_view(request):
+    """
+    Allows a new team owner to name their team and provide business details
+    after a successful subscription payment.
+    """
+    plan_id = request.session.get('pending_subscription_plan_id')
+    
+    # Security: If the user hasn't just completed a payment, they cannot access this page.
+    if not plan_id:
+        messages.error(request, "No pending subscription found. Please choose a plan to continue.")
+        return redirect('for_business')
+
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    
+    if request.method == 'POST':
+        form = TeamCreationForm(request.POST)
+        if form.is_valid():
+            # Create the team, linking the owner and setting the name from the form
+            team = form.save(commit=False)
+            team.owner = request.user
+            team.plan = plan
+            
+            # Activate the subscription
+            team.is_active = True
+            team.subscription_ends = timezone.now() + datetime.timedelta(days=30)
+            team.save()
+            
+            # Clean up the session variable
+            del request.session['pending_subscription_plan_id']
+
+            messages.success(request, f"Welcome! Your team '{team.name}' has been created successfully.")
+            return redirect('team_dashboard')
+    else:
+        form = TeamCreationForm()
+
+    context = {'form': form, 'plan': plan}
+    return render(request, 'business/team_setup.html', context)
+
+@login_required
+def team_dashboard_view(request):
+    """
+    Displays the management dashboard for a team owner, allowing them to add members.
+    """
+    try:
+        team = request.user.owned_team
+    except Team.DoesNotExist:
+        messages.error(request, "You do not have a team dashboard. Contact sales to get started.")
+        return redirect('for_business')
+
+    if request.method == 'POST':
+        email_to_add = request.POST.get('email')
+        if email_to_add:
+            try:
+                user_to_add = CustomUser.objects.get(email__iexact=email_to_add)
+                
+                if user_to_add == team.owner:
+                     messages.warning(request, "You cannot add the team owner as a member.")
+                elif team.members.count() >= team.plan.max_members:
+                    messages.error(request, f"You have reached the maximum of {team.plan.max_members} members for your plan.")
+                else:
+                    team.members.add(user_to_add)
+                    messages.success(request, f"Successfully added {user_to_add.get_full_name()} to your team.")
+
+            except CustomUser.DoesNotExist:
+                messages.error(request, f"No user with the email '{email_to_add}' was found on Erudio.")
+        else:
+            messages.error(request, "Please provide an email address.")
+        
+        return redirect('team_dashboard')
+    
+    seat_usage_percentage = 0
+    if team.plan and team.plan.max_members > 0:
+        seat_usage_percentage = (team.members.count() / team.plan.max_members) * 100
+    
+    context = {
+        'team': team,
+        'seat_usage_percentage': seat_usage_percentage,
+    }
+
+    return render(request, 'business/team_dashboard.html', context)
+
+
+@login_required
+def remove_team_member_view(request, member_id):
+    """
+    Removes a member from the logged-in user's team.
+    """
+    try:
+        team = request.user.owned_team
+        member_to_remove = get_object_or_404(CustomUser, id=member_id)
+        
+        if member_to_remove in team.members.all():
+            team.members.remove(member_to_remove)
+            messages.success(request, f"{member_to_remove.get_full_name()} has been removed from your team.")
+        else:
+            messages.error(request, "This user is not a member of your team.")
+
+    except Team.DoesNotExist:
+        messages.error(request, "You do not have a team to manage.")
+    
+    return redirect('team_dashboard')
+
+@superuser_required
+def plan_management_view(request):
+    """
+    Displays the plan management page and handles AJAX creation of new plans.
+    """
+    plans = SubscriptionPlan.objects.all().order_by('price')
+    form = SubscriptionPlanForm()
+
+    if request.method == 'POST': # Handles AJAX POST for creating a new plan
+        form = SubscriptionPlanForm(request.POST)
+        if form.is_valid():
+            plan = form.save()
+            # Render just the new table row to be inserted by JavaScript
+            html = render_to_string('partials/plan_list_item.html', {'plan': plan})
+            return JsonResponse({'status': 'success', 'html': html})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+    context = {'plans': plans, 'form': form}
+    return render(request, 'admin/plan_management.html', context)
+
+@superuser_required
+def plan_detail_view(request, plan_id):
+    """
+    API endpoint to get the details of a single plan for editing.
+    """
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    data = {
+        'name': plan.name,
+        'price': str(plan.price),
+        'max_members': plan.max_members,
+        'description': plan.description or '',
+        'features': plan.features or '',
+    }
+    return JsonResponse(data)
+
+
+@superuser_required
+def plan_update_view(request, plan_id):
+    """
+    Handles AJAX POST for updating an existing subscription plan.
+    """
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    if request.method == 'POST':
+        form = SubscriptionPlanForm(request.POST, instance=plan)
+        if form.is_valid():
+            plan = form.save()
+            # Render the updated table row to replace the old one
+            html = render_to_string('partials/plan_list_item.html', {'plan': plan})
+            return JsonResponse({'status': 'success', 'html': html, 'plan_id': plan.id})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+    return JsonResponse({'status': 'error'}, status=405)
+
+
+@superuser_required
+def plan_delete_view(request, plan_id):
+    """
+    Handles AJAX POST for deleting a subscription plan.
+    """
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    if request.method == 'POST':
+        # Add a check to prevent deleting a plan that is in use
+        if Team.objects.filter(plan=plan).exists():
+            return JsonResponse({'status': 'error', 'message': 'This plan is currently assigned to one or more teams and cannot be deleted.'}, status=400)
+        plan.delete()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=405)
+
+
+@login_required
+def initiate_team_subscription_view(request, plan_id):
+    """
+    Handles the start of a B2B subscription process.
+    """
+    if hasattr(request.user, 'owned_team'):
+        messages.warning(request, "You already manage a team. You cannot subscribe to a new plan.")
+        return redirect('team_dashboard')
+
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    reference = f"ERUDIO-SUB-{request.user.id}-{plan.id}-{uuid.uuid4().hex[:10].upper()}"
+    paystack = PaystackAPI()
+    
+    # Add plan_id to the callback URL so we know what was paid for
+    callback_url = request.build_absolute_uri(
+        f"{reverse('verify_team_subscription')}?plan_id={plan.id}"
+    )
+    amount_in_kobo = int(plan.price * 100)
+
+    api_response = paystack.initialize_transaction(request.user.email, amount_in_kobo, reference, callback_url)
+
+    if api_response and api_response.get('status'):
+        return redirect(api_response['data']['authorization_url'])
+    else:
+        messages.error(request, "We couldn't connect to the payment gateway. Please try again later.")
+        return redirect('for_business')
+
+
+@login_required
+def verify_team_subscription_view(request):
+    """
+    Handles the callback from Paystack. Verifies payment and redirects to the team setup page.
+    """
+    reference = request.GET.get('reference')
+    plan_id = request.GET.get('plan_id')
+    
+    if not reference or not plan_id:
+        messages.error(request, "Invalid subscription verification link.")
+        return redirect('for_business')
+
+    paystack = PaystackAPI()
+    api_response = paystack.verify_transaction(reference)
+
+    if api_response and api_response.get('data') and api_response['data']['status'] == 'success':
+        # Payment is successful. Store the plan_id in the session
+        # and redirect the user to the final setup step.
+        request.session['pending_subscription_plan_id'] = plan_id
+        
+        return redirect('team_setup')
+    else:
+        messages.error(request, "Payment verification failed. Please try again or contact support if you were debited.")
+        return redirect('for_business')

@@ -1,0 +1,39 @@
+<div x-show="modalOpen" x-transition.opacity x-cloak class="fixed z-50 inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center px-4">
+    <div @click.away="modalOpen = false" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-auto">
+        <h3 x-ref="modalTitle" class="text-lg font-medium text-gray-900">Create New Plan</h3>
+        <form x-ref="planForm" @submit.prevent="submitForm" class="mt-4 space-y-4">
+            
+            <div>
+                <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" name="name" x-ref="formName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <p x-show="formErrors.name" x-text="formErrors.name" class="text-red-600 text-sm mt-1"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="id_price" class="block text-sm font-medium text-gray-700">Price (₦)</label>
+                    <input type="number" step="0.01" name="price" x-ref="formPrice" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <p x-show="formErrors.price" x-text="formErrors.price" class="text-red-600 text-sm mt-1"></p>
+                </div>
+                <div>
+                    <label for="id_max_members" class="block text-sm font-medium text-gray-700">Max Members</label>
+                    <input type="number" name="max_members" x-ref="formMaxMembers" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <p x-show="formErrors.max_members" x-text="formErrors.max_members" class="text-red-600 text-sm mt-1"></p>
+                </div>
+            </div>
+
+            <div>
+                <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" x-ref="formDescription" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+            </div>
+
+            <div>
+                <label for="id_features" class="block text-sm font-medium text-gray-700">Features (one per line)</label>
+                <textarea name="features" x-ref="formFeatures" rows="5" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4 border-t"><button type="button" @click="modalOpen = false" class="bg-white py-2 px-4 border border-gray-300 rounded-md text-sm font-medium">Cancel</button><button type="submit" class="py-2 px-4 border border-transparent rounded-md text-white bg-indigo-600">Save Plan</button></div>
+        </form>
+    </div>
+</div>
+

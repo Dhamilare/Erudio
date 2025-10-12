@@ -195,3 +195,42 @@ class AccountDeleteConfirmationForm(forms.Form):
         if data != 'DELETE':
             raise forms.ValidationError("You must type 'DELETE' to confirm.")
         return data
+
+class SubscriptionPlanForm(forms.ModelForm):
+    """
+    Form for Super Admins to create and update Subscription Plans.
+    """
+    class Meta:
+        model = SubscriptionPlan
+        fields = ['name', 'price', 'max_members', 'description', 'features']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}),
+            'price': forms.NumberInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}),
+            'max_members': forms.NumberInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3'}),
+            'description': forms.Textarea(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3', 'rows': 3}),
+            'features': forms.Textarea(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3', 'rows': 5, 'placeholder': 'Enter one feature per line.'}),
+        }
+
+
+class TeamCreationForm(forms.ModelForm):
+    """
+    A form for a new team owner to provide their company details after subscribing.
+    """
+    class Meta:
+        model = Team
+        fields = ['name', 'phone_number', 'address']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm',
+                'placeholder': 'e.g., Your Company Name'
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm',
+                'placeholder': 'e.g., +234 801 234 5678'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm',
+                'rows': 3,
+                'placeholder': 'e.g., 123 Freedom Way, Lekki Phase 1, Lagos'
+            }),
+        }

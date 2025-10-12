@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Set Up Your Team - Erudio{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+             <i class="fas fa-check-circle text-6xl text-green-500"></i>
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Payment Successful!
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Just one final step. Please provide your company details to create your team.
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10">
+            <form class="space-y-6" action="{% url 'team_setup' %}" method="POST">
+                {% csrf_token %}
+                
+                <div>
+                    <p class="text-sm font-medium text-gray-700">You are subscribing to the <span class="font-bold text-indigo-600">{{ plan.name }}</span> plan.</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Company / Team Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<p class="mt-2 text-sm text-red-600">{{ form.name.errors|striptags }}</p>{% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">Business Phone Number</label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}<p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors|striptags }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700">Registered Business Address</label>
+                    {{ form.address }}
+                    {% if form.address.errors %}<p class="mt-2 text-sm text-red-600">{{ form.address.errors|striptags }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Create Team & Go to Dashboard
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

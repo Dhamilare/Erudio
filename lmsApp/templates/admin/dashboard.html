@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Super Admin Dashboard - Erudio{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="pb-8 border-b border-gray-200 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900">Super Admin Dashboard</h1>
+                <p class="mt-1 text-lg text-gray-600">Platform-wide analytics and insights for Erudio.</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'plan_management' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    <i class="fas fa-tags mr-2"></i>
+                    Manage Plans
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Revenue -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-green-500 to-green-400 rounded-lg p-4"><i class="fas fa-dollar-sign fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt><dd class="text-3xl font-semibold text-gray-900">₦{{ total_revenue|intcomma }}</dd></div></div></div></div>
+            <!-- Total Users -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-blue-500 to-blue-400 rounded-lg p-4"><i class="fas fa-users fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt><dd class="text-3xl font-semibold text-gray-900">{{ total_users|intcomma }}</dd></div></div></div></div>
+            <!-- Total Courses -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-purple-500 to-purple-400 rounded-lg p-4"><i class="fas fa-book-open fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Total Courses</dt><dd class="text-3xl font-semibold text-gray-900">{{ total_courses|intcomma }}</dd></div></div></div></div>
+            <!-- Business Teams -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-orange-500 to-orange-400 rounded-lg p-4"><i class="fas fa-building fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Business Teams</dt><dd class="text-3xl font-semibold text-gray-900">{{ total_teams|intcomma }}</dd></div></div></div></div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- New User Growth Chart -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-medium text-gray-900">New User Growth (Last 6 Months)</h3>
+                <div class="mt-4 h-80"><canvas id="userGrowthChart"></canvas></div>
+            </div>
+            <!-- User Breakdown -->
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-medium text-gray-900">User Breakdown</h3>
+                <ul class="mt-4 space-y-4">
+                    <li class="flex items-center"><i class="fas fa-user-graduate text-2xl text-blue-500 w-10"></i><div class="ml-4"><p class="text-lg font-semibold text-gray-900">{{ total_students|intcomma }}</p><p class="text-sm text-gray-500">Students</p></div></li>
+                    <li class="flex items-center"><i class="fas fa-chalkboard-teacher text-2xl text-purple-500 w-10"></i><div class="ml-4"><p class="text-lg font-semibold text-gray-900">{{ total_instructors|intcomma }}</p><p class="text-sm text-gray-500">Instructors</p></div></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Recent Business Signups Table -->
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-900">Recent Business Signups</h2>
+            <div class="mt-4 bg-white shadow-lg rounded-xl overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company / Team</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for team in recent_teams %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ team.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ team.owner.email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ team.plan.name|default:"--" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if team.is_active %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-sm text-gray-500">
+                                No business teams have registered yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Activity Tables -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Recent Users -->
+            <div class="bg-white shadow-lg rounded-xl overflow-hidden"><h2 class="p-6 text-lg font-medium text-gray-900 border-b">Recently Joined Users</h2><table class="min-w-full divide-y divide-gray-200"><tbody class="divide-y divide-gray-200">{% for user in recent_users %}<tr><td class="px-6 py-4"><div class="text-sm font-medium text-gray-900">{{ user.get_full_name }}</div><div class="text-sm text-gray-500">{{ user.email }}</div></td><td class="px-6 py-4 text-right text-sm text-gray-500">{{ user.date_joined|timesince }} ago</td></tr>{% endfor %}</tbody></table></div>
+            <!-- Recent Transactions -->
+            <div class="bg-white shadow-lg rounded-xl overflow-hidden"><h2 class="p-6 text-lg font-medium text-gray-900 border-b">Recent Transactions</h2><table class="min-w-full divide-y divide-gray-200"><tbody class="divide-y divide-gray-200">{% for tx in recent_transactions %}<tr><td class="px-6 py-4"><div class="text-sm font-medium text-gray-900">₦{{ tx.amount|intcomma }}</div><div class="text-sm text-gray-500">{{ tx.student.get_full_name }}</div></td><td class="px-6 py-4 text-right text-sm text-gray-500">{{ tx.course.title }}</td></tr>{% endfor %}</tbody></table></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('userGrowthChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|safe }},
+                    datasets: [{
+                        label: 'New Users',
+                        data: {{ chart_values|safe }},
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 }}}, plugins: { legend: { display: false }}}
+            });
+        }
+    });
+</script>
+{% endblock %}
+

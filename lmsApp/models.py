@@ -274,3 +274,57 @@ class Transaction(models.Model):
     def __str__(self):
         return f"Transaction {self.reference} for {self.student.email}"
 
+
+class SubscriptionPlan(models.Model):
+    """
+    Defines a B2B subscription plan that a Team can subscribe to.
+    """
+    name = models.CharField(max_length=100, unique=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per month in NGN.")
+    max_members = models.PositiveIntegerField(help_text="Maximum number of members allowed in the team.")
+    description = models.TextField(blank=True, null=True)
+    features = models.TextField(help_text="Enter one feature per line. This will be displayed as a list.", blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} - ₦{self.price}/month"
+
+    @property
+    def feature_list(self):
+        if not self.features:
+            return []
+        return [line.strip() for line in self.features.split('\n') if line.strip()]
+
+
+class Team(models.Model):
+    """
+    Represents a company or organization on the Erudio for Business platform.
+    """
+    name = models.CharField(max_length=200, help_text="The name of the company or team.")
+    owner = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='owned_team',
+        help_text="The user who manages this team."
+    )
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        related_name='teams', 
+        blank=True,
+        help_text="Employees who are members of this team."
+    )
+    phone_number = models.CharField(max_length=20, blank=True, null=True, help_text="Contact phone number for the team/company.")
+    address = models.TextField(blank=True, null=True, help_text="Registered business address for invoicing.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, blank=True)
+    is_active = models.BooleanField(default=False, help_text="Is the subscription for this team currently active?")
+    subscription_ends = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def has_expired(self):
+        """Checks if the subscription has expired."""
+        if self.is_active and self.subscription_ends and self.subscription_ends < timezone.now():
+            return True
+        return False
+    
+    def __str__(self):
+        return f"{self.name} (Managed by {self.owner.email})"

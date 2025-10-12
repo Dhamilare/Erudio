@@ -1,0 +1,10 @@
+{% load humanize %}
+<tr id="plan-row-{{ plan.id }}">
+    <td class="px-6 py-4 font-medium text-gray-900">{{ plan.name }}</td>
+    <td class="px-6 py-4 text-gray-500">₦{{ plan.price|intcomma }} / month</td>
+    <td class="px-6 py-4 text-gray-500">{{ plan.max_members }}</td>
+    <td class="px-6 py-4 text-right space-x-4">
+        <button @click="openModal({{ plan.id }})" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+        <button @click="openDeleteModal({{ plan.id }}, '{{ plan.name|escapejs }}')" class="text-red-600 hover:text-red-900 font-medium">Delete</button>
+    </td>
+</tr>
