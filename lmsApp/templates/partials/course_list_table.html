@@ -1,3 +1,4 @@
+{% load humanize %}
 <div class="mt-8">
     <h2 class="text-xl font-semibold text-gray-900">Your Courses</h2>
     <div class="mt-4 flex flex-col">
@@ -28,7 +29,7 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {% if course.is_paid %}₦{{ course.price|floatformat:2 }}{% else %}<span class="font-semibold text-green-600">Free</span>{% endif %}
+                                    {% if course.is_paid %}₦{{ course.price|intcomma }}{% else %}<span class="font-semibold text-green-600">Free</span>{% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                                     <a href="{% url 'course_manage' slug=course.slug %}" class="text-indigo-600 hover:text-indigo-900" title="Manage Content"><i class="fas fa-list-ul"></i> Manage</a>

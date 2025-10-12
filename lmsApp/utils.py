@@ -5,6 +5,8 @@ from django.core.mail import EmailMessage
 from datetime import datetime
 import requests
 import re
+from xhtml2pdf import pisa
+from io import BytesIO
 
 
 def send_templated_email(template_name, subject, recipient_list, context, attachments=None):
@@ -126,10 +128,21 @@ def send_enrollment_confirmation_email(enrollment):
         context
     )
 
+def generate_certificate_pdf(template_src, context_dict={}):
+    """
+    Renders an HTML template to a PDF file in memory.
+    """
+    html = render_to_string(template_src, context_dict)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    if not pdf.err:
+        return result.getvalue()
+    return None
+
 
 def send_completion_certificate_email(enrollment):
     """
-    Sends a course completion certificate email to a student.
+    Generates a PDF certificate and sends it as an email attachment.
     """
     subject = f"Congratulations on completing {enrollment.course.title}!"
     context = {
@@ -138,9 +151,20 @@ def send_completion_certificate_email(enrollment):
         'student': enrollment.student,
         'completion_date': timezone.now(),
     }
-    send_templated_email(
-        'emails/completion_certificate.html',
-        subject,
-        [enrollment.student.email],
+
+    pdf_content = generate_certificate_pdf(
+        'emails/completion_certificate.html', 
         context
     )
+
+    email = EmailMessage(
+        subject,
+        f"Hello {enrollment.student.get_full_name},\n\nCongratulations on completing your course! Please find your certificate attached to this email.\n\nWe're proud of your achievement.\n\nThe Erudio Team",
+        settings.DEFAULT_FROM_EMAIL,
+        [enrollment.student.email]
+    )
+
+    if pdf_content:
+        filename = f"Erudio_Certificate_{enrollment.course.title.replace(' ', '_')}.pdf"
+        email.attach(filename, pdf_content, 'application/pdf')
+        email.send()

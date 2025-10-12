@@ -2,46 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Completion Certificate</title>
+    <!-- Styles optimized for xhtml2pdf rendering -->
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: "Helvetica", "Georgia", serif;
+            color: #333;
+        }
+        .container {
+            border: 10px double #4f46e5;
+            padding: 40px;
+            text-align: center;
+            height: 90%;
+            box-sizing: border-box;
+        }
+        .signature {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+            display: inline-block;
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: Georgia, serif; background-color: #f4f7f9;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 700px; margin: 40px auto; background-color: #ffffff;">
-        <tr>
-            <td style="padding: 20px;">
-                <div style="border: 10px double #4f46e5; padding: 40px; text-align: center;">
-                    <h1 style="font-size: 40px; color: #1e293b; margin: 0; font-weight: normal;">Certificate of Completion</h1>
-                    
-                    <p style="font-size: 20px; color: #475569; margin: 20px 0 10px;">This certificate is proudly presented to</p>
+<body style="margin: 0; padding: 0;">
+    <div class="container">
+        <h1 style="font-size: 40px; color: #1e293b; margin: 0; font-weight: normal;">Certificate of Completion</h1>
+        
+        <p style="font-size: 20px; color: #475569; margin: 20px 0 10px;">This certificate is proudly presented to</p>
 
-                    <h2 style="font-size: 36px; color: #4f46e5; margin: 0 0 20px; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px;">
-                        {{ student.get_full_name }}
-                    </h2>
+        <h2 style="font-size: 36px; color: #4f46e5; margin: 0 0 20px; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px;">
+            {{ student.get_full_name }}
+        </h2>
 
-                    <p style="font-size: 20px; color: #475569; margin: 20px 0 10px;">for successfully completing the online course</p>
+        <p style="font-size: 20px; color: #475569; margin: 20px 0 10px;">for successfully completing the online course</p>
 
-                    <h3 style="font-size: 28px; color: #1e293b; margin: 0 0 30px; font-weight: bold;">
-                        {{ course.title }}
-                    </h3>
+        <h3 style="font-size: 28px; color: #1e293b; margin: 0 0 30px; font-weight: bold;">
+            {{ course.title }}
+        </h3>
 
-                    <p style="font-size: 16px; color: #64748b; margin: 0;">on {{ completion_date|date:"F j, Y" }}</p>
+        <p style="font-size: 16px; color: #64748b; margin: 0;">on {{ completion_date|date:"F j, Y" }}</p>
 
-                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top: 40px;">
-                        <tr>
-                            <td align="center">
-                                <p style="font-size: 14px; color: #64748b; margin: 0; border-top: 1px solid #ccc; padding-top: 10px; display: inline-block;">
-                                    {{ course.instructor.get_full_name }}<br>
-                                    <span style="font-size: 12px;">Lead Instructor, Erudio</span>
-                                </p>
-                            </td>
-                            <td align="center">
-                               <img src="https://placehold.co/100x100/4f46e5/ffffff?text=ERUDIO" alt="Erudio Seal" width="100">
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </td>
-        </tr>
-    </table>
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top: 50px;">
+            <tr>
+                <td align="center" width="50%">
+                    <p class="signature">
+                        {{ course.instructor.get_full_name }}<br>
+                        <span style="font-size: 12px;">Lead Instructor, Erudio</span>
+                    </p>
+                </td>
+                <td align="center" width="50%">
+                    <p class="signature">
+                        Platform Management<br>
+                        <span style="font-size: 12px;">Erudio, Inc.</span>
+                    </p>
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>
+
