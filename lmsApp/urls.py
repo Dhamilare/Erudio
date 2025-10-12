@@ -42,5 +42,8 @@ urlpatterns = [
     # --- ACCOUNT SETTINGS URLs ---
     path('account/settings/', views.account_settings_view, name='account_settings'),
     path('account/delete/', views.delete_account_view, name='delete_account'),
+
+    # --- CERTIFICATE URL ---
+    path('enrollment/<int:enrollment_id>/send-certificate/', views.resend_certificate_view, name='send_certificate'),
 ]
 

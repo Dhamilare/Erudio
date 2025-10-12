@@ -595,5 +595,25 @@ def delete_account_view(request):
             messages.error(request, error_message)
             return redirect('account_settings')
     
-    # Redirect GET requests
     return redirect('account_settings')
+
+@login_required
+def resend_certificate_view(request, enrollment_id):
+    """
+    Handles a request to re-send a completion certificate via email.
+    """
+    if request.method == 'POST':
+        enrollment = get_object_or_404(Enrollment, id=enrollment_id, student=request.user)
+        
+        if enrollment.get_progress_percentage >= 100:
+            try:
+                send_completion_certificate_email(enrollment)
+                return JsonResponse({'status': 'success', 'message': f"Your certificate for '{enrollment.course.title}' has been sent to your email."})
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        else:
+            return JsonResponse({'status': 'error', 'message': 'You have not completed this course yet.'}, status=400)
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)

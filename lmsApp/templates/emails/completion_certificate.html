@@ -3,64 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <title>Course Completion Certificate</title>
-    <!-- Styles optimized for xhtml2pdf rendering -->
     <style>
         @page {
             size: A4 landscape;
             margin: 1cm;
         }
         body {
-            font-family: "Helvetica", "Georgia", serif;
-            color: #333;
-        }
-        .container {
-            border: 10px double #4f46e5;
-            padding: 40px;
+            font-family: "Georgia", serif;
+            color: #1e293b;
             text-align: center;
-            height: 90%;
+        }
+        .certificate-container {
+            border: 10px double #4f46e5;
+            padding: 20px;
+            height: 100%; /* Make container fill the page */
             box-sizing: border-box;
         }
-        .signature {
+        .title {
+            font-size: 40px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        .subtitle {
+            font-size: 20px;
+            color: #475569;
+            margin: 0 0 20px 0;
+        }
+        .name {
+            font-size: 36px;
+            color: #4f46e5;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+            border-bottom: 2px solid #e2e8f0;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .course-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0 0 30px 0;
+        }
+        .date {
+            font-size: 16px;
+            color: #64748b;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 200px;
+            margin: 0 auto 8px;
+        }
+        .signature-name {
             font-size: 14px;
+            color: #1e293b;
+            margin: 0;
+        }
+        .signature-role {
+            font-size: 12px;
             color: #64748b;
             margin: 0;
-            border-top: 1px solid #ccc;
-            padding-top: 10px;
+        }
+        .erudio-seal {
+            font-family: "Helvetica", sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #4f46e5;
+            padding: 20px;
+            border-radius: 5px;
             display: inline-block;
         }
     </style>
 </head>
-<body style="margin: 0; padding: 0;">
-    <div class="container">
-        <h1 style="font-size: 40px; color: #1e293b; margin: 0; font-weight: normal;">Certificate of Completion</h1>
-        
-        <p style="font-size: 20px; color: #475569; margin: 20px 0 10px;">This certificate is proudly presented to</p>
-
-        <h2 style="font-size: 36px; color: #4f46e5; margin: 0 0 20px; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px;">
-            {{ student.get_full_name }}
-        </h2>
-
-        <p style="font-size: 20px; color: #475569; margin: 20px 0 10px;">for successfully completing the online course</p>
-
-        <h3 style="font-size: 28px; color: #1e293b; margin: 0 0 30px; font-weight: bold;">
-            {{ course.title }}
-        </h3>
-
-        <p style="font-size: 16px; color: #64748b; margin: 0;">on {{ completion_date|date:"F j, Y" }}</p>
-
-        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top: 50px;">
-            <tr>
-                <td align="center" width="50%">
-                    <p class="signature">
-                        {{ course.instructor.get_full_name }}<br>
-                        <span style="font-size: 12px;">Lead Instructor, Erudio</span>
-                    </p>
+<body>
+    <div class="certificate-container">
+        <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; height: 100%;">
+            <!-- Main Content Row -->
+            <tr style="height: 85%; vertical-align: top;">
+                <td colspan="2">
+                    <h1 class="title">Certificate of Completion</h1>
+                    <p class="subtitle">This certificate is proudly presented to</p>
+                    <h2 class="name">{{ student.get_full_name }}</h2>
+                    <p class="subtitle">for successfully completing the online course</p>
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="date">on {{ completion_date|date:"F j, Y" }}</p>
                 </td>
-                <td align="center" width="50%">
-                    <p class="signature">
-                        Platform Management<br>
-                        <span style="font-size: 12px;">Erudio, Inc.</span>
-                    </p>
+            </tr>
+            <!-- Signature Row -->
+            <tr style="height: 15%; vertical-align: bottom;">
+                <td style="width: 50%; text-align: center;">
+                    <div class="signature-line"></div>
+                    <p class="signature-name">{{ course.instructor.get_full_name }}</p>
+                    <p class="signature-role">Lead Instructor, Erudio</p>
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    <div class="erudio-seal">ERUDIO</div>
                 </td>
             </tr>
         </table>
