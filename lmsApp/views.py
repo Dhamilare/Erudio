@@ -3,19 +3,17 @@ from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from .models import *
 from .forms import *
-from .utils import send_templated_email, PaystackAPI
+from .utils import send_templated_email, PaystackAPI, get_youtube_embed_url, send_completion_certificate_email, send_enrollment_confirmation_email
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.db.models import Sum, Q, Count
-import json
 from django.db.models.functions import TruncMonth 
-from collections import defaultdict
 import datetime
+
 
 # --- CUSTOM DECORATORS ---
 
@@ -158,14 +156,23 @@ def course_list_view(request):
     return render(request, 'course_list.html', context)
 
 
+@login_required
 def course_detail_view(request, slug):
-    """Displays the details for a single published course."""
-    course = get_object_or_404(
-        Course.objects.prefetch_related('modules__lessons'), 
-        slug=slug, 
-        is_published=True
-    )
-    context = {'course': course}
+    course = get_object_or_404(Course.objects.prefetch_related('modules__lessons'), slug=slug, is_published=True)
+    
+    # Check if the current user is enrolled in this course.
+    is_enrolled = False
+    enrollment = None
+    if request.user.is_authenticated:
+        enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
+        if enrollment:
+            is_enrolled = True
+
+    context = {
+        'course': course,
+        'is_enrolled': is_enrolled,
+        'enrollment': enrollment, # Pass the enrollment object to the template
+    }
     return render(request, 'course_detail.html', context)
 
 # --- STUDENT DASHBOARD & LEARNING VIEWS ---
@@ -179,45 +186,82 @@ def my_courses_view(request):
 
 @login_required
 def lesson_detail_view(request, course_slug, lesson_slug):
-    """Displays the course player page for a specific lesson, verifying enrollment."""
+    """
+    Displays the course player page with sequential module unlocking.
+    """
     course = get_object_or_404(Course.objects.prefetch_related('modules__lessons'), slug=course_slug, is_published=True)
     
-    if not Enrollment.objects.filter(student=request.user, course=course).exists():
-        messages.error(request, "You must be enrolled in this course to view its lessons.")
-        raise PermissionDenied("User is not enrolled in this course.")
-
+    # Robustly fetch the specific enrollment record for this user and course.
+    enrollment = get_object_or_404(Enrollment, student=request.user, course=course)
+    
     current_lesson = get_object_or_404(Lesson, slug=lesson_slug, module__course=course)
 
+    # Build a list of all modules for the sidebar, calculating their lock status.
+    modules_with_status = []
+    previous_module_complete = True  # The first module is always considered unlocked.
+    for module in course.modules.all(): # Assumes modules are ordered by the 'order' field.
+        is_unlocked = previous_module_complete
+        modules_with_status.append({
+            'module': module,
+            'is_unlocked': is_unlocked
+        })
+        # The lock status of the *next* module depends on the completion of the *current* one.
+        if not enrollment.is_module_complete(module):
+            previous_module_complete = False
+
+    # Security Check: Prevent users from accessing lessons in a locked module via the URL.
+    current_module_is_unlocked = False
+    for m_data in modules_with_status:
+        if m_data['module'] == current_lesson.module:
+            current_module_is_unlocked = m_data['is_unlocked']
+            break
+            
+    if not current_module_is_unlocked:
+        messages.error(request, "You must complete the previous module to access this lesson.")
+        # Redirect the user to the correct next lesson they should be on.
+        next_lesson_to_complete = enrollment.get_next_lesson()
+        if next_lesson_to_complete:
+            return redirect(next_lesson_to_complete.get_absolute_url())
+        return redirect('my_courses') # Failsafe redirect.
+
+    embed_url = get_youtube_embed_url(current_lesson.video_url)
     context = {
         'course': course,
-        'current_lesson': current_lesson
+        'current_lesson': current_lesson,
+        'enrollment': enrollment,
+        'modules_with_status': modules_with_status,
+        'embed_url': embed_url
     }
     return render(request, 'course_player.html', context)
 
 @login_required
-def mark_lesson_complete_view(request, lesson_id):
+def mark_lesson_complete_view(request, course_slug, lesson_slug):
     """Handles marking a lesson as complete via a POST request."""
     if request.method == 'POST':
-        lesson = get_object_or_404(Lesson, id=lesson_id)
-        course = lesson.module.course
+        course = get_object_or_404(Course, slug=course_slug)
+        lesson = get_object_or_404(Lesson, slug=lesson_slug, module__course=course)
         enrollment = get_object_or_404(Enrollment, student=request.user, course=course)
         enrollment.completed_lessons.add(lesson)
 
         # Find the next lesson to redirect to
-        all_lessons = list(Lesson.objects.filter(module__course=course).order_by('module__order', 'order'))
+        all_lessons = list(
+            Lesson.objects.filter(module__course=course).order_by('module__order', 'order')
+        )
         try:
             current_index = all_lessons.index(lesson)
             if current_index + 1 < len(all_lessons):
                 next_lesson = all_lessons[current_index + 1]
-                messages.success(request, f"Great job on completing '{lesson.title}'!")
+                messages.success(request, f"✅ Great job on completing '{lesson.title}'!")
                 return redirect(next_lesson.get_absolute_url())
             else:
-                messages.success(request, f"Congratulations! You have completed the course: '{course.title}'!")
+                messages.success(request, f"🎉 Congratulations! You’ve completed the course: '{course.title}'!")
+                send_completion_certificate_email(enrollment)
                 return redirect('my_courses')
         except ValueError:
             return redirect('my_courses')
 
-    return redirect('home') # Should not be accessed via GET
+    return redirect('home')  # Should not be accessed via GET
+
 
 # --- PAYMENT & ENROLLMENT VIEWS ---
 
@@ -231,8 +275,9 @@ def initiate_payment_view(request, slug):
         return redirect('course_detail', slug=slug)
 
     if not course.is_paid or course.price == 0:
-        Enrollment.objects.create(student=request.user, course=course)
+        enrollment = Enrollment.objects.create(student=request.user, course=course)
         messages.success(request, f"You have successfully enrolled in '{course.title}'.")
+        send_enrollment_confirmation_email(enrollment)
         return redirect('my_courses')
 
     reference = f"ERUDIO-{request.user.id}-{course.id}-{uuid.uuid4().hex[:10].upper()}"
@@ -271,8 +316,10 @@ def verify_payment_view(request):
     if api_response and api_response.get('data') and api_response['data']['status'] == 'success':
         transaction.status = 'success'
         transaction.save()
-        Enrollment.objects.get_or_create(student=transaction.student, course=transaction.course)
+        enrollment, created = Enrollment.objects.get_or_create(student=transaction.student, course=transaction.course)
         messages.success(request, f"Payment successful! You are now enrolled in '{transaction.course.title}'.")
+        if created:
+            send_enrollment_confirmation_email(enrollment)
         return redirect('my_courses')
     else:
         transaction.status = 'failed'
@@ -473,3 +520,80 @@ def category_delete_view(request, category_id):
             return JsonResponse({'status': 'error', 'message': 'This category is in use and cannot be deleted.'}, status=400)
         category.delete()
 
+
+@login_required
+def account_settings_view(request):
+    user = request.user
+    active_tab = 'profile' 
+    
+    profile_form = ProfileUpdateForm(instance=user)
+    password_form = StyledPasswordChangeForm(user=user)
+    notification_form = NotificationSettingsForm(instance=user)
+    delete_form = AccountDeleteConfirmationForm()
+
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'profile':
+            profile_form = ProfileUpdateForm(request.POST, instance=user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'Your profile has been updated successfully.')
+                return redirect('account_settings')
+            else:
+                active_tab = 'profile'
+
+        elif form_type == 'password':
+            password_form = StyledPasswordChangeForm(user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Your password was successfully updated.')
+                return redirect('account_settings')
+            else:
+                active_tab = 'security'
+
+        elif form_type == 'notifications':
+            notification_form = NotificationSettingsForm(request.POST, instance=user)
+            if notification_form.is_valid():
+                notification_form.save()
+                messages.success(request, 'Your notification preferences have been saved.')
+                return redirect('account_settings')
+            else:
+                active_tab = 'notifications'
+
+    context = {
+        'profile_form': profile_form,
+        'password_form': password_form,
+        'notification_form': notification_form,
+        'delete_form': delete_form,
+        'active_tab': active_tab,
+    }
+    return render(request, 'account_settings.html', context)
+
+
+@login_required
+def delete_account_view(request):
+    """
+    Handles the actual account deletion after explicit text confirmation.
+    """
+    if request.method == 'POST':
+        form = AccountDeleteConfirmationForm(request.POST)
+        user = request.user
+
+        if form.is_valid():
+            # The form is valid only if the user typed 'DELETE' correctly.
+            # We can now proceed with permanent deletion.
+            user.delete()
+            logout(request)
+            messages.success(request, 'Your account and all associated data have been permanently deleted.')
+            return redirect('home')
+        else:
+            # The user did not type 'DELETE' correctly.
+            # The form error will be stored in form.errors
+            error_message = form.errors.get('confirmation_text', ['Confirmation failed.'])[0]
+            messages.error(request, error_message)
+            return redirect('account_settings')
+    
+    # Redirect GET requests
+    return redirect('account_settings')

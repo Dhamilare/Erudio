@@ -3,13 +3,11 @@
 {% block title %}My Courses - Erudio{% endblock %}
 
 {% block content %}
-<div class="bg-slate-50 min-h-screen">
+<div class="min-h-screen">
     <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div class="sm:flex sm:items-center sm:justify-between pb-8 border-b border-gray-200">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">My Learning Dashboard</h1>
-                <p class="mt-1 text-lg text-gray-600">Welcome back, {{ user.first_name }}. Let's continue your journey.</p>
-            </div>
+        <div class="pb-8 border-b border-gray-200">
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">My Learning Dashboard</h1>
+            <p class="mt-1 text-lg text-gray-600">Welcome back, {{ request.user.first_name }}. Let's continue your journey.</p>
         </div>
 
         <div class="mt-10">
@@ -17,38 +15,62 @@
                 <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                     {% for enrollment in enrollments %}
                         {% with enrollment.course as course %}
-                        <div class="flex flex-col rounded-lg shadow-lg overflow-hidden bg-white transform hover:-translate-y-1 transition-transform duration-300">
-                            <div class="flex-shrink-0">
-                                <img class="h-48 w-full object-cover" src="{{ course.thumbnail_url|default:'https://placehold.co/600x400/e2e8f0/4a5568?text=Erudio' }}" alt="">
+                        {% with enrollment.get_next_lesson as next_lesson %}
+                        <div class="group flex flex-col rounded-xl shadow-lg overflow-hidden bg-white transform hover:-translate-y-2 transition-transform duration-300 border border-gray-200 hover:shadow-2xl">
+                            <div class="relative">
+                                <a href="{{ next_lesson.get_absolute_url|default:course.get_absolute_url }}">
+                                    <img class="h-48 w-full object-cover" src="{{ course.thumbnail_url|default:'https://placehold.co/600x400/e2e8f0/4a5568?text=Erudio' }}" alt="Thumbnail for {{ course.title }}">
+                                </a>
+                                {% if not next_lesson %}
+                                <div class="absolute top-3 right-3">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 ring-1 ring-inset ring-green-600/20">
+                                        <i class="fas fa-check-circle mr-1.5"></i> COMPLETED
+                                    </span>
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="flex-1 p-6 flex flex-col justify-between">
                                 <div class="flex-1">
-                                    <p class="text-sm font-medium text-indigo-600">{{ course.category|default:'General' }}</p>
-                                    <a href="#" class="block mt-2">
-                                        <p class="text-xl font-semibold text-gray-900">{{ course.title }}</p>
+                                    <p class="text-sm font-medium text-indigo-600">{{ course.categories.all|join:", " }}</p>
+                                    <a href="{{ next_lesson.get_absolute_url|default:course.get_absolute_url }}" class="block mt-2">
+                                        <p class="text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ course.title }}</p>
                                     </a>
+                                    <div class="mt-4 flex items-center">
+                                        <img class="h-8 w-8 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text={{ course.instructor.first_name|slice:':1' }}{{ course.instructor.last_name|slice:':1' }}" alt="Instructor">
+                                        <span class="ml-2 text-sm font-medium text-gray-700">by {{ course.instructor.get_full_name }}</span>
+                                    </div>
                                     <div class="mt-4">
-                                        <p class="text-sm text-gray-600 mb-1">Progress: {{ enrollment.get_progress_percentage }}%</p>
-                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ enrollment.get_progress_percentage }}%"></div>
+                                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                            <span>Progress</span>
+                                            <span>{{ enrollment.get_progress_percentage }}%</span>
                                         </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="h-2.5 rounded-full {% if not next_lesson %}bg-green-500{% else %}bg-indigo-600{% endif %}" style="width: {{ enrollment.get_progress_percentage }}%"></div>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">{{ enrollment.completed_lessons.count }} / {{ course.get_total_lesson_count }} lessons complete</p>
                                     </div>
                                 </div>
                                 <div class="mt-6">
-                                    {% with course.modules.first.lessons.first as first_lesson %}
-                                        {% if first_lesson %}
-                                            <a href="{{ first_lesson.get_absolute_url }}" class="w-full flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                                                Continue Learning <i class="fas fa-arrow-right ml-2"></i>
+                                    {% if next_lesson %}
+                                        <!-- STATE 1: Course is in progress -->
+                                        <a href="{{ next_lesson.get_absolute_url }}" class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                            Continue Learning <i class="fas fa-arrow-right ml-2"></i>
+                                        </a>
+                                    {% else %}
+                                        <!-- ✅ THE FIX IS HERE: Course is complete, show two options -->
+                                        <div class="space-y-3">
+                                            <a href="{{ course.modules.first.lessons.first.get_absolute_url }}" class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                                Review Course <i class="fas fa-redo-alt ml-2"></i>
                                             </a>
-                                        {% else %}
-                                            <span class="w-full block text-center px-4 py-2 border border-gray-300 text-base font-medium rounded-md text-gray-500 bg-gray-100">
-                                                Content Coming Soon
-                                            </span>
-                                        {% endif %}
-                                    {% endwith %}
+                                            <a href="#" class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                                Get Certificate <i class="fas fa-certificate ml-2"></i>
+                                            </a>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
+                        {% endwith %}
                         {% endwith %}
                     {% endfor %}
                 </div>

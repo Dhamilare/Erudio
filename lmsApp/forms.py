@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import *
 
 User = get_user_model()
@@ -140,3 +140,58 @@ class CategoryForm(forms.ModelForm):
                 'placeholder': 'e.g., Digital Marketing'
             })
         }
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    """Form for users to update their public profile information."""
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'profile_picture_url', 'bio']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'last_name': forms.TextInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'profile_picture_url': forms.URLInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'placeholder': 'https://example.com/your-image.png'}),
+            'bio': forms.Textarea(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'rows': 4}),
+        }
+
+class NotificationSettingsForm(forms.ModelForm):
+    """Form for users to manage their email notification preferences."""
+    class Meta:
+        model = CustomUser
+        fields = ['receives_new_course_emails', 'receives_progress_reminders']
+        labels = {
+            'receives_new_course_emails': 'New Course Announcements',
+            'receives_progress_reminders': 'Weekly Progress Reminders',
+        }
+        widgets = {
+            'receives_new_course_emails': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
+            'receives_progress_reminders': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
+        }
+
+class StyledPasswordChangeForm(PasswordChangeForm):
+    """A custom-styled version of Django's built-in PasswordChangeForm."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['old_password'].widget = forms.PasswordInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'autocomplete': 'current-password'})
+        self.fields['new_password1'].widget = forms.PasswordInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'autocomplete': 'new-password'})
+        self.fields['new_password2'].widget = forms.PasswordInput(attrs={'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'autocomplete': 'new-password'})
+
+
+class AccountDeleteConfirmationForm(forms.Form):
+    """
+    A more explicit confirmation form that requires the user to type 'DELETE'.
+    """
+    confirmation_text = forms.CharField(
+        label="To confirm, please type 'DELETE' in the box below.",
+        max_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm',
+            'placeholder': 'DELETE'
+        })
+    )
+
+    def clean_confirmation_text(self):
+        data = self.cleaned_data['confirmation_text']
+        if data != 'DELETE':
+            raise forms.ValidationError("You must type 'DELETE' to confirm.")
+        return data

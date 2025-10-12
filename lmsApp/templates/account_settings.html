@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Settings - Erudio{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">Account Settings</h1>
+        <p class="mt-1 text-lg text-gray-600">Manage your profile, security, and notification preferences.</p>
+    </div>
+
+    <!-- Alpine root wrapper -->
+    <div x-data="{ activeTab: '{{ active_tab|default:'profile' }}', deleteModalOpen: false, deleteConfirmText: '' }">
+
+        <!-- Main Card (with overflow hidden) -->
+        <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                    <button @click="activeTab = 'profile'"
+                        :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'profile', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'profile' }"
+                        class="flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-user-circle mr-2"></i>Profile
+                    </button>
+                    <button @click="activeTab = 'security'"
+                        :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'security', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'security' }"
+                        class="flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-shield-alt mr-2"></i>Security
+                    </button>
+                    <button @click="activeTab = 'notifications'"
+                        :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'notifications', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'notifications' }"
+                        class="flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-bell mr-2"></i>Notifications
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div>
+                <!-- Profile Tab -->
+                <div x-show="activeTab === 'profile'" x-cloak>
+                    <form method="post" action="{% url 'account_settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="profile">
+                        <div class="px-6 py-8 space-y-6">
+                            {% for field in profile_form %}
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                                <div class="md:col-span-1">
+                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                                    {% if field.help_text %}
+                                    <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="md:col-span-2">
+                                    {{ field }}
+                                    {% for error in field.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-t flex justify-end">
+                            <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Security Tab -->
+                <div x-show="activeTab === 'security'" x-cloak>
+                    <form method="post" action="{% url 'account_settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="password">
+                        <div class="px-6 py-8 space-y-6">
+                            <h3 class="text-lg font-medium text-gray-900">Change Password</h3>
+                            {% if password_form.non_field_errors %}
+                            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                                {% for error in password_form.non_field_errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            {% for field in password_form %}
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                <label for="{{ field.id_for_label }}"
+                                    class="md:col-span-1 block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                                <div class="md:col-span-2">
+                                    {{ field }}
+                                    {% for error in field.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-t flex justify-end">
+                            <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                Change Password
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Danger Zone -->
+                    <div class="px-6 py-8 mt-8 border-t border-red-200">
+                        <h3 class="text-lg font-medium text-red-700">Danger Zone</h3>
+                        <p class="mt-1 text-sm text-gray-600">Once you delete your account, all data will be permanently erased.</p>
+                        <div class="mt-4">
+                            <button @click="deleteModalOpen = true" type="button"
+                                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                Delete My Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Tab -->
+                <div x-show="activeTab === 'notifications'" x-cloak>
+                    <form method="post" action="{% url 'account_settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="notifications">
+                        <div class="px-6 py-8">
+                            <fieldset>
+                                <legend class="text-base font-medium text-gray-900">Email Notifications</legend>
+                                <p class="text-sm text-gray-500">Choose which emails you want to receive.</p>
+                                <div class="mt-4 space-y-4">
+                                    {% for field in notification_form %}
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            {{ field }}
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="{{ field.id_for_label }}" class="font-medium text-gray-700">{{ field.label }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-t flex justify-end">
+                            <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div 
+            x-show="deleteModalOpen" 
+            x-cloak 
+            @keydown.escape.window="deleteModalOpen = false"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-50 bg-gray-600 bg-opacity-75 backdrop-blur-sm flex items-center justify-center px-4"
+        >
+            <div 
+                @click.away="deleteModalOpen = false" 
+                class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto"
+            >
+                <form method="post" action="{% url 'delete_account' %}">
+                    {% csrf_token %}
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Permanently Delete Account</h3>
+                            <p class="mt-2 text-sm text-gray-500">
+                                This action is irreversible. To confirm, please type <strong>DELETE</strong> below.
+                            </p>
+                            <div class="mt-4">
+                                <input type="text" name="{{ delete_form.confirmation_text.name }}"
+                                    x-model="deleteConfirmText" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                                    placeholder="DELETE">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                            :disabled="deleteConfirmText !== 'DELETE'"
+                            :class="{ 'opacity-50 cursor-not-allowed': deleteConfirmText !== 'DELETE' }"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm transition">
+                            Permanently Delete
+                        </button>
+                        <button @click="deleteModalOpen = false; deleteConfirmText = '';" type="button"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

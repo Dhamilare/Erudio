@@ -39,6 +39,10 @@ class CustomUser(AbstractUser):
     email = models.EmailField('email address', unique=True)
     is_verified = models.BooleanField(default=False)
     is_instructor = models.BooleanField(default=False)
+    profile_picture_url = models.URLField(max_length=500, blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
+    receives_new_course_emails = models.BooleanField(default=True)
+    receives_progress_reminders = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -240,6 +244,18 @@ class Enrollment(models.Model):
         # If all lessons are completed, return None
         return None
     
+    def is_module_complete(self, module):
+        """
+        Checks if all published lessons in a given module have been completed by the student.
+        """
+        module_lessons = module.lessons.filter(is_published=True)
+        # If a module has no lessons, it's considered complete.
+        if not module_lessons.exists():
+            return True
+        
+        completed_lessons_in_module = self.completed_lessons.filter(module=module)
+        return completed_lessons_in_module.count() >= module_lessons.count()
+    
     def __str__(self):
         return f"{self.student.email} enrolled in {self.course.title}"
 
@@ -248,7 +264,7 @@ class Transaction(models.Model):
     """
     Model to store payment transaction details from Paystack.
     """
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     reference = models.CharField(max_length=100, unique=True)

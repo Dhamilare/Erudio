@@ -62,8 +62,12 @@
                                         <a href="{% url 'instructor_dashboard' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-chalkboard-teacher w-5 mr-2"></i> Instructor Dashboard</a>
                                         <div class="border-t border-gray-100"></div>
                                     {% endif %}
-                                    <a href="{% url 'my_courses' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-book w-5 mr-2"></i> My Courses</a>
-                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-cog w-5 mr-2"></i> Account Settings</a>
+                                    
+                                    {% if not user.is_instructor %}
+                                        <a href="{% url 'my_courses' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-book w-5 mr-2"></i> My Courses</a>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'account_settings' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-cog w-5 mr-2"></i> Account Settings</a>
                                     <div class="border-t border-gray-100"></div>
                                     <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-sign-out-alt w-5 mr-2"></i> Sign out</a>
                                 </div>
@@ -76,7 +80,7 @@
                 </div>
                 
                 <div class="-mr-2 flex md:hidden">
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" aria-controls="mobile-menu" aria-expanded="false">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100" aria-controls="mobile-menu" aria-expanded="false">
                         <span class="sr-only">Open main menu</span>
                         <i class="fas text-xl" :class="{ 'fa-bars': !mobileMenuOpen, 'fa-times': mobileMenuOpen }"></i>
                     </button>
@@ -105,8 +109,12 @@
                         {% if user.is_instructor %}
                             <a href="{% url 'instructor_dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-200">Instructor Dashboard</a>
                         {% endif %}
-                        <a href="{% url 'my_courses' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-200">My Courses</a>
-                        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-200">Account Settings</a>
+                        
+                        {% if not user.is_instructor %}
+                            <a href="{% url 'my_courses' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-200">My Courses</a>
+                        {% endif %}
+
+                        <a href="{% url 'account_settings' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-200">Account Settings</a>
                         <a href="{% url 'logout' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-200">Sign out</a>
                     </div>
                 {% else %}

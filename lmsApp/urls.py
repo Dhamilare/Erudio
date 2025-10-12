@@ -14,7 +14,7 @@ urlpatterns = [
     path('course/<slug:slug>/', views.course_detail_view, name='course_detail'),
     path('dashboard/my-courses/', views.my_courses_view, name='my_courses'),
     path('course/<slug:course_slug>/learn/<slug:lesson_slug>/', views.lesson_detail_view, name='lesson_detail'),
-    path('lesson/<int:lesson_id>/complete/', views.mark_lesson_complete_view, name='mark_lesson_complete'),
+    path('course/<slug:course_slug>/learn/<slug:lesson_slug>/complete/', views.mark_lesson_complete_view, name='mark_lesson_complete'),
 
     # --- PAYMENT FLOW URLs ---
     path('course/<slug:slug>/payment/initiate/', views.initiate_payment_view, name='initiate_payment'),
@@ -38,5 +38,9 @@ urlpatterns = [
     # --- AJAX API URLs for CATEGORY MANAGEMENT ---
     path('instructor/api/category/create/', views.category_create_view, name='category_create'),
     path('instructor/api/category/delete/<int:category_id>/', views.category_delete_view, name='category_delete'),
+
+    # --- ACCOUNT SETTINGS URLs ---
+    path('account/settings/', views.account_settings_view, name='account_settings'),
+    path('account/delete/', views.delete_account_view, name='delete_account'),
 ]
 

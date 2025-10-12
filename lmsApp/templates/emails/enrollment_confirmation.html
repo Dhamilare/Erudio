@@ -1,0 +1,55 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrollment Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f9;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <tr>
+            <td align="center" style="background-color: #4f46e5; padding: 40px; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                <h1 style="color: #ffffff; font-size: 24px; margin: 0;">You're In!</h1>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 40px;">
+                <p style="color: #334155; line-height: 1.6; margin: 0 0 20px;">Hello {{ student.get_full_name }},</p>
+                <p style="color: #334155; line-height: 1.6; margin: 0 0 20px;">Thank you for enrolling! You now have full lifetime access to the following course:</p>
+                
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e2e8f0; border-radius: 5px; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 20px;">
+                            <h3 style="margin: 0 0 10px; font-size: 18px; color: #1e293b;">{{ course.title }}</h3>
+                            <p style="margin: 0; font-size: 14px; color: #64748b;">Taught by {{ course.instructor.get_full_name }}</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h4 style="font-size: 16px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin: 25px 0 15px;">Enrollment Details</h4>
+                <p style="color: #334155; line-height: 1.6; margin: 0 0 10px;"><strong>Date:</strong> {{ enrollment.enrolled_at|date:"F j, Y" }}</p>
+                {% if transaction %}
+                    <p style="color: #334155; line-height: 1.6; margin: 0 0 10px;"><strong>Amount Paid:</strong> ₦{{ transaction.amount|intcomma }}</p>
+                    <p style="color: #334155; line-height: 1.6; margin: 0 0 20px;"><strong>Reference:</strong> {{ transaction.reference }}</p>
+                {% else %}
+                    <p style="color: #334155; line-height: 1.6; margin: 0 0 20px;"><strong>Amount Paid:</strong> Free</p>
+                {% endif %}
+
+                <table align="center" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td align="center" style="background-color: #4f46e5; border-radius: 5px;">
+                            <a href="{{ course.modules.first.lessons.first.get_absolute_url }}" target="_blank" style="padding: 15px 25px; display: inline-block; color: #ffffff; text-decoration: none; font-weight: bold;">Start Learning Now</a>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #f8fafc; padding: 20px; text-align: center; color: #718096; font-size: 12px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                &copy; {% now "Y" %} Erudio. All rights reserved.
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
