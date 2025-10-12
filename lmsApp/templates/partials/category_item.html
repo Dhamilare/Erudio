@@ -1,0 +1,6 @@
+<li id="category-item-{{ category.id }}" class="py-3 flex justify-between items-center">
+    <span class="text-sm font-medium text-gray-800">{{ category.name }}</span>
+    <button @click="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')" type="button" class="text-red-500 hover:text-red-700 text-sm">
+        <i class="fas fa-trash-alt"></i> Delete
+    </button>
+</li>

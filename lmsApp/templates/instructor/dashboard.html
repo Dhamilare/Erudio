@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Instructor Dashboard - Erudio{% endblock %}
+
+{% block content %}
+<div 
+    x-data="instructorDashboard()" 
+    class="bg-slate-50 min-h-screen">
+
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-8 border-b border-gray-200">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Instructor Dashboard</h1>
+                <p class="mt-1 text-md text-gray-600">Manage your courses and view your performance.</p>
+            </div>
+
+            <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
+                <button 
+                    @click="categoriesModalOpen = true" 
+                    type="button" 
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                    <i class="fas fa-tags mr-2"></i> Manage Categories
+                </button>
+
+                <a href="{% url 'instructor_analytics' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-chart-line mr-2"></i> View Analytics
+                </a>
+
+                <a href="{% url 'course_create' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    <i class="fas fa-plus mr-2"></i> Create New Course
+                </a>
+            </div>
+        </div>
+
+        <!-- Course List -->
+        {% include 'partials/course_list_table.html' %}
+    </div>
+
+    <!-- Categories Modal -->
+    {% include 'partials/manage_categories_modal.html' %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function instructorDashboard() {
+        return {
+            categoriesModalOpen: false,
+            newCategoryName: '',
+            errorMessage: '',
+
+            addCategory() {
+                if (!this.newCategoryName.trim()) {
+                    this.errorMessage = 'Category name cannot be empty.';
+                    return;
+                }
+
+                fetch('{% url "category_create" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `name=${encodeURIComponent(this.newCategoryName)}`
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const list = document.getElementById('category-list');
+                        const noCategoriesMsg = document.getElementById('no-categories-message');
+                        if (noCategoriesMsg) noCategoriesMsg.remove();
+                        list.insertAdjacentHTML('beforeend', data.html);
+                        this.newCategoryName = '';
+                        this.errorMessage = '';
+                    } else {
+                        this.errorMessage = data.errors?.name?.[0] || 'An unknown error occurred.';
+                    }
+                })
+                .catch(() => {
+                    this.errorMessage = 'Network error while adding category.';
+                });
+            },
+
+            deleteCategory(buttonElement, categoryId, categoryName) {
+                if (confirm(`Are you sure you want to delete the category "${categoryName}"? This cannot be undone.`)) {
+                    fetch(`/instructor/api/category/delete/${categoryId}/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            buttonElement.closest('li').remove();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(() => {
+                        alert('Network error while deleting category.');
+                    });
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

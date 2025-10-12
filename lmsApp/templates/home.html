@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Erudio - Unlock Your Potential in Nigeria & Beyond{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative bg-white overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+        <div class="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+            <svg class="hidden lg:block absolute right-0 inset-y-0 h-full w-48 text-white transform translate-x-1/2" fill="currentColor" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <polygon points="50,0 100,0 50,100 0,100" />
+            </svg>
+
+            <main class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                <div class="sm:text-center lg:text-left">
+                    <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                        <span class="block xl:inline">Unlock Your Potential</span>
+                        <span class="block text-indigo-600 xl:inline">Learn New Skills Today</span>
+                    </h1>
+                    <p class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                        Join thousands of learners in Nigeria and beyond. Acquire job-ready skills in tech, business, and more from world-class instructors.
+                    </p>
+                    <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                        <div class="rounded-md shadow">
+                            <a href="{% url 'course_list' %}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-transform transform hover:scale-105">
+                                Explore Courses
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+        <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full" src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" alt="Team collaborating">
+    </div>
+</div>
+
+<!-- Why Choose Us Section -->
+<div class="py-12 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:text-center">
+            <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Why Erudio?</h2>
+            <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                A Better Way to Learn
+            </p>
+        </div>
+        <div class="mt-10">
+            <dl class="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
+                <div class="relative">
+                    <dt>
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                            <i class="fas fa-chalkboard-teacher text-2xl"></i>
+                        </div>
+                        <p class="ml-16 text-lg leading-6 font-medium text-gray-900">Expert Instructors</p>
+                    </dt>
+                    <dd class="mt-2 ml-16 text-base text-gray-500">Learn from industry experts in Nigeria and across the globe who are passionate about teaching.</dd>
+                </div>
+                <div class="relative">
+                    <dt>
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                            <i class="fas fa-briefcase text-2xl"></i>
+                        </div>
+                        <p class="ml-16 text-lg leading-6 font-medium text-gray-900">Career-Focused Curriculum</p>
+                    </dt>
+                    <dd class="mt-2 ml-16 text-base text-gray-500">Our courses are designed to provide you with the practical, job-ready skills employers are looking for.</dd>
+                </div>
+                <div class="relative">
+                    <dt>
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                            <i class="fas fa-clock text-2xl"></i>
+                        </div>
+                        <p class="ml-16 text-lg leading-6 font-medium text-gray-900">Flexible Learning</p>
+                    </dt>
+                    <dd class="mt-2 ml-16 text-base text-gray-500">Learn at your own pace with lifetime access to course materials on mobile and desktop.</dd>
+                </div>
+                <div class="relative">
+                    <dt>
+                        <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                            <i class="fas fa-users text-2xl"></i>
+                        </div>
+                        <p class="ml-16 text-lg leading-6 font-medium text-gray-900">Vibrant Community</p>
+                    </dt>
+                    <dd class="mt-2 ml-16 text-base text-gray-500">Join a thriving community of learners and mentors to collaborate, get help, and network.</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+
+
+<!-- Featured Courses Section -->
+<div class="py-12 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:text-center">
+            <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Featured Courses</h2>
+            <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                Start Your Learning Journey
+            </p>
+        </div>
+
+        <div class="mt-10">
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {% for course in courses %}
+                <div class="group flex flex-col rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 bg-white">
+                    <div class="flex-shrink-0 relative">
+                        <a href="{{ course.get_absolute_url }}">
+                            <img class="h-48 w-full object-cover" src="{{ course.thumbnail_url|default:'https://placehold.co/600x400/e2e8f0/4a5568?text=Erudio' }}" alt="Thumbnail for {{ course.title }}">
+                        </a>
+                    </div>
+                    <div class="flex-1 p-6 flex flex-col justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-indigo-600">
+                                {{ course.category.all|join:", " }}
+                            </p>
+                            <a href="{{ course.get_absolute_url }}" class="block mt-2">
+                                <p class="text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ course.title }}</p>
+                                <p class="mt-3 text-base text-gray-500 line-clamp-3">{{ course.short_description }}</p>
+                            </a>
+                        </div>
+                        <div class="mt-6 flex items-center justify-between text-sm text-gray-500 border-t pt-4">
+                           <div class="flex items-center">
+                               <span class="font-medium text-gray-900">By {{ course.instructor.get_full_name }}</span>
+                           </div>
+                           <div class="font-bold text-lg text-gray-900">
+                                {% if course.is_paid and course.price > 0 %}
+                                    ₦{{ course.price|intcomma }}
+                                {% else %}
+                                    <span class="text-green-600">Free</span>
+                                {% endif %}
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-12">
+                    <i class="fas fa-book-open text-4xl text-gray-400"></i>
+                    <p class="mt-4 text-lg text-gray-600">Featured courses are coming soon. Please check back later!</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-12 text-center">
+                <a href="{% url 'course_list' %}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    View All Courses
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonial Section -->
+<section class="bg-indigo-700">
+    <div class="max-w-7xl mx-auto md:grid md:grid-cols-2 md:px-6 lg:px-8">
+        <div class="py-12 px-4 sm:px-6 md:flex md:flex-col md:py-16 md:pl-0 md:pr-10 md:border-r md:border-indigo-800">
+            <div class="md:flex-shrink-0">
+                <span class="text-3xl font-bold text-white"><i class="fas fa-graduation-cap mr-2"></i>Erudio</span>
+            </div>
+            <blockquote class="mt-6 md:flex-grow md:flex md:flex-col">
+                <div class="relative text-lg font-medium text-white md:flex-grow">
+                    <p>“This platform has been a game-changer for my career. The courses are practical and relevant to the Nigerian job market. I landed a new role in tech just three months after completing my specialization. Highly recommended!”</p>
+                </div>
+                <footer class="mt-8">
+                    <p class="text-base font-semibold text-indigo-200">Adebayo Chinedu - Software Engineer, Lagos</p>
+                </footer>
+            </blockquote>
+        </div>
+        <div class="py-12 px-4 border-t-2 border-indigo-800 sm:px-6 md:py-16 md:pr-0 md:pl-10 md:border-t-0 md:border-l">
+             <blockquote class="mt-6 md:flex-grow md:flex md:flex-col">
+                <div class="relative text-lg font-medium text-white md:flex-grow">
+                    <p>“I run a small business and the digital marketing course gave me the skills to grow my online presence significantly. The instructors are amazing and the platform is so easy to use. Erudio is a fantastic resource.”</p>
+                </div>
+                <footer class="mt-8">
+                    <p class="text-base font-semibold text-indigo-200">Fatima Bello - Entrepreneur, Abuja</p>
+                </footer>
+            </blockquote>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

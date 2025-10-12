@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Erudio{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+            <!-- Erudio Logo/Brand Name -->
+            <a href="{% url 'home' %}" class="inline-block">
+                <h1 class="text-4xl font-bold text-indigo-600 hover:text-indigo-700 transition duration-300 ease-in-out">
+                    <i class="fas fa-graduation-cap"></i> Erudio
+                </h1>
+            </a>
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Create your account
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Join our community of learners today.
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10">
+            <form class="space-y-6" action="{% url 'register' %}" method="POST" novalidate>
+                {% csrf_token %}
+
+                <!-- Name Fields in a Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- First Name -->
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">First Name</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input id="{{ form.first_name.id_for_label }}" name="{{ form.first_name.name }}" type="text" autocomplete="given-name" required
+                                   class="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                   placeholder="John">
+                        </div>
+                        {% if form.first_name.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors|striptags }}</p>
+                        {% endif %}
+                    </div>
+                     <!-- Last Name -->
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input id="{{ form.last_name.id_for_label }}" name="{{ form.last_name.name }}" type="text" autocomplete="family-name" required
+                                   class="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                   placeholder="Doe">
+                        </div>
+                         {% if form.last_name.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors|striptags }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Email Field -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email address</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        <input id="{{ form.email.id_for_label }}" name="{{ form.email.name }}" type="email" autocomplete="email" required
+                               class="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="you@example.com">
+                    </div>
+                    {% if form.email.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.email.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
+                     <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input id="{{ form.password.id_for_label }}" name="{{ form.password.name }}" type="password" autocomplete="new-password" required
+                               class="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    {% if form.password.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.password.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div>
+                    <label for="{{ form.confirm_password.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input id="{{ form.confirm_password.id_for_label }}" name="{{ form.confirm_password.name }}" type="password" autocomplete="new-password" required
+                               class="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    {% if form.confirm_password.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.confirm_password.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 ease-in-out">
+                         <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="fas fa-user-plus text-indigo-500 group-hover:text-indigo-400"></i>
+                        </span>
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center text-sm text-gray-600">
+                <p>
+                    Already have an account?
+                    <a href="{% url 'login' %}" class="font-medium text-indigo-600 hover:text-indigo-500">
+                        Sign in
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

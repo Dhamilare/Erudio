@@ -1,0 +1,31 @@
+<li class="flex justify-between items-center p-3 bg-slate-50 rounded-md" id="lesson-{{ lesson.id }}">
+    <div class="flex items-center">
+        <i class="fas fa-play-circle text-gray-400 mr-3"></i>
+        <span class="text-sm font-medium text-gray-700">{{ lesson.title }}</span>
+    </div>
+    <div class="flex items-center space-x-3">
+        <button 
+            @click="openLessonModal(
+                {{ lesson.module.id }}, 
+                {{ lesson.id }}, 
+                '{{ lesson.title|escapejs }}', 
+                '{{ lesson.video_url|escapejs }}', 
+                '{{ lesson.content|escapejs }}', 
+                '{{ lesson.order }}', 
+                {{ lesson.is_published|yesno:'true,false' }}
+            )" 
+            class="text-sm text-blue-500 hover:text-blue-700" 
+            title="Edit Lesson"
+        >
+            <i class="fas fa-edit"></i>
+        </button>
+        <button 
+            @click="openDeleteModal('{% url 'lesson_delete' lesson.id %}', 'lesson')" 
+            class="text-sm text-red-500 hover:text-red-700" 
+            title="Delete Lesson"
+        >
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</li>
+

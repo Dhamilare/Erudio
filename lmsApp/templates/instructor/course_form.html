@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Edit Course - {{ form.instance.title }}
+    {% else %}
+        Create New Course
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh]">
+    <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        
+        <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {% if form.instance.pk %}
+                        <i class="fas fa-edit mr-2 text-indigo-500"></i> Edit Course
+                    {% else %}
+                        <i class="fas fa-plus-circle mr-2 text-indigo-500"></i> Create New Course
+                    {% endif %}
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Fill out the details below to {% if form.instance.pk %}update your{% else %}get started with a new{% endif %} course.
+                </p>
+            </div>
+
+            <form action="" method="post" novalidate>
+                {% csrf_token %}
+                <div class="px-6 py-8 space-y-6">
+                    
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong class="font-bold">Error!</strong>
+                            <span class="block sm:inline">{{ form.non_field_errors|striptags }}</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Course Title -->
+                    <div>
+                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700">Course Title</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}<p class="mt-2 text-sm text-red-600">{{ form.title.errors|striptags }}</p>{% endif %}
+                    </div>
+
+                    <!-- Short Description -->
+                    <div>
+                        <label for="{{ form.short_description.id_for_label }}" class="block text-sm font-medium text-gray-700">Short Description</label>
+                        <p class="text-xs text-gray-500 mb-1">A brief, one-sentence summary for the course card.</p>
+                        {{ form.short_description }}
+                        {% if form.short_description.errors %}<p class="mt-2 text-sm text-red-600">{{ form.short_description.errors|striptags }}</p>{% endif %}
+                    </div>
+
+                    <!-- Long Description -->
+                    <div>
+                        <label for="{{ form.long_description.id_for_label }}" class="block text-sm font-medium text-gray-700">Full Course Description</label>
+                        <p class="text-xs text-gray-500 mb-1">A detailed description for the course detail page.</p>
+                        {{ form.long_description }}
+                        {% if form.long_description.errors %}<p class="mt-2 text-sm text-red-600">{{ form.long_description.errors|striptags }}</p>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.what_you_will_learn.id_for_label }}" class="block text-sm font-medium text-gray-700">What Students Will Learn</label>
+                        <p class="text-xs text-gray-500 mb-1">Enter one key learning outcome per line. This will be displayed as a bulleted list on the course page.</p>
+                        {{ form.what_you_will_learn }}
+                        {% if form.what_you_will_learn.errors %}<p class="mt-2 text-sm text-red-600">{{ form.what_you_will_learn.errors|striptags }}</p>{% endif %}
+                    </div>
+
+                    <!-- Thumbnail URL -->
+                    <div>
+                        <label for="{{ form.thumbnail_url.id_for_label }}" class="block text-sm font-medium text-gray-700">Thumbnail Image URL</label>
+                        <p class="text-xs text-gray-500 mb-1">Link to a high-quality image for your course (e.g., from Unsplash).</p>
+                        {{ form.thumbnail_url }}
+                        {% if form.thumbnail_url.errors %}<p class="mt-2 text-sm text-red-600">{{ form.thumbnail_url.errors|striptags }}</p>{% endif %}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Categories -->
+                        <div>
+                            <label for="{{ form.categories.id_for_label }}" class="block text-sm font-medium text-gray-700">Categories</label>
+                            <p class="text-xs text-gray-500 mb-1">Select one or more categories (hold Ctrl/Cmd to select multiple).</p>
+                            {{ form.category }}
+                            {% if form.category.errors %}<p class="mt-2 text-sm text-red-600">{{ form.categories.errors|striptags }}</p>{% endif %}
+                        </div>
+                        
+                        <!-- Price -->
+                        <div>
+                            <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700">Price (₦)</label>
+                            <p class="text-xs text-gray-500 mb-1">Set to 0 if "Paid Course" is unchecked.</p>
+                            {{ form.price }}
+                            {% if form.price.errors %}<p class="mt-2 text-sm text-red-600">{{ form.price.errors|striptags }}</p>{% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Toggles -->
+                    <div class="flex items-center space-x-8 pt-4 border-t">
+                        <!-- Is Paid -->
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">{{ form.is_paid }}</div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.is_paid.id_for_label }}" class="font-medium text-gray-700">Paid Course</label>
+                                <p class="text-gray-500">Check this if the course requires payment.</p>
+                            </div>
+                        </div>
+                        <!-- Is Published -->
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">{{ form.is_published }}</div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.is_published.id_for_label }}" class="font-medium text-gray-700">Publish Course</label>
+                                <p class="text-gray-500">Check this to make the course visible to students.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end items-center space-x-3">
+                    <a href="{% url 'instructor_dashboard' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        <i class="fas fa-save mr-2"></i>
+                        {% if form.instance.pk %}
+                            Save Changes
+                        {% else %}
+                            Create Course
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

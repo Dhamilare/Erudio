@@ -1,0 +1,26 @@
+<div class="bg-white p-6 rounded-lg shadow" id="module-{{ module.id }}">
+    <div class="flex justify-between items-center">
+        <div>
+            <h4 class="text-lg font-bold text-gray-900">{{ module.order }}. {{ module.title }}</h4>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button @click="openLessonModal({{ module.id }})" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                <i class="fas fa-plus"></i> Add Lesson
+            </button>
+            <button @click="openModuleModal({{ module.id }}, '{{ module.title|escapejs }}', '{{ module.order }}')" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button @click="openDeleteModal('{% url 'module_delete' module.id %}', 'module')" class="text-sm font-medium text-red-600 hover:text-red-800">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+    <ul class="mt-4 space-y-2 border-t pt-4" id="lesson-list-{{ module.id }}">
+        {% for lesson in module.lessons.all %}
+            {% include 'partials/lesson_item.html' with lesson=lesson %}
+        {% empty %}
+             <li class="text-center text-sm text-gray-500 py-2">No lessons in this module yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+

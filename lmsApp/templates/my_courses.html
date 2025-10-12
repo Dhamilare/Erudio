@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}My Courses - Erudio{% endblock %}
+
+{% block content %}
+<div class="bg-slate-50 min-h-screen">
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center sm:justify-between pb-8 border-b border-gray-200">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">My Learning Dashboard</h1>
+                <p class="mt-1 text-lg text-gray-600">Welcome back, {{ user.first_name }}. Let's continue your journey.</p>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            {% if enrollments %}
+                <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    {% for enrollment in enrollments %}
+                        {% with enrollment.course as course %}
+                        <div class="flex flex-col rounded-lg shadow-lg overflow-hidden bg-white transform hover:-translate-y-1 transition-transform duration-300">
+                            <div class="flex-shrink-0">
+                                <img class="h-48 w-full object-cover" src="{{ course.thumbnail_url|default:'https://placehold.co/600x400/e2e8f0/4a5568?text=Erudio' }}" alt="">
+                            </div>
+                            <div class="flex-1 p-6 flex flex-col justify-between">
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-indigo-600">{{ course.category|default:'General' }}</p>
+                                    <a href="#" class="block mt-2">
+                                        <p class="text-xl font-semibold text-gray-900">{{ course.title }}</p>
+                                    </a>
+                                    <div class="mt-4">
+                                        <p class="text-sm text-gray-600 mb-1">Progress: {{ enrollment.get_progress_percentage }}%</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ enrollment.get_progress_percentage }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-6">
+                                    {% with course.modules.first.lessons.first as first_lesson %}
+                                        {% if first_lesson %}
+                                            <a href="{{ first_lesson.get_absolute_url }}" class="w-full flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                                Continue Learning <i class="fas fa-arrow-right ml-2"></i>
+                                            </a>
+                                        {% else %}
+                                            <span class="w-full block text-center px-4 py-2 border border-gray-300 text-base font-medium rounded-md text-gray-500 bg-gray-100">
+                                                Content Coming Soon
+                                            </span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-20 bg-white rounded-lg shadow-md">
+                    <i class="fas fa-book-reader text-6xl text-gray-300"></i>
+                    <h3 class="mt-4 text-2xl font-semibold text-gray-900">Your learning journey starts here.</h3>
+                    <p class="mt-2 text-gray-500">You haven't enrolled in any courses yet.</p>
+                    <div class="mt-6">
+                        <a href="{% url 'course_list' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                            <i class="fas fa-search mr-2"></i>
+                            Explore Courses
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage {{ course.title }} - Erudio{% endblock %}
+
+{% block content %}
+<div x-data="courseManage()" class="bg-slate-50 min-h-screen">
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="pb-5 border-b border-gray-200 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <nav class="hidden sm:flex" aria-label="Breadcrumb">
+                    <ol role="list" class="flex items-center space-x-4">
+                        <li>
+                            <div>
+                                <a href="{% url 'instructor_dashboard' %}" class="text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-chalkboard-teacher mr-2"></i>Dashboard
+                                </a>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <i class="fas fa-chevron-right text-gray-400 h-5 w-5 flex-shrink-0"></i>
+                                <span class="ml-4 text-sm font-medium text-gray-500">Manage Course</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h3 class="mt-2 text-3xl leading-6 font-extrabold text-gray-900">{{ course.title }}</h3>
+            </div>
+            <div class="mt-3 sm:mt-0 sm:ml-4">
+                <button @click="openModuleModal()" type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Module
+                </button>
+            </div>
+        </div>
+
+        <!-- Curriculum List -->
+        <div id="curriculum-list" class="mt-8 space-y-8">
+            {% for module in course.modules.all %}
+                {% include 'partials/module_item.html' with module=module %}
+            {% empty %}
+                <div id="no-modules-placeholder" class="text-center py-12 px-6 bg-white rounded-lg shadow">
+                    <i class="fas fa-box-open text-5xl text-gray-400"></i>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Modules Yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by adding your first module.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% include 'partials/modals.html' %}
+</div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('courseManage', () => ({
+            moduleModalOpen: false,
+            lessonModalOpen: false,
+            deleteModalOpen: false,
+            currentModuleId: null,
+            currentLessonId: null,
+            deleteUrl: '',
+            deleteType: '',
+
+            openModuleModal(moduleId = null, title = '', order = '') {
+                this.currentModuleId = moduleId;
+                this.$refs.moduleForm.reset();
+                this.$refs.moduleFormTitle.value = title;
+                this.$refs.moduleFormOrder.value = order;
+                this.$refs.moduleModalTitle.textContent = moduleId ? 'Edit Module' : 'Add New Module';
+                this.moduleModalOpen = true;
+            },
+            
+            openLessonModal(moduleId, lessonId = null, title = '', video_url = '', content = '', order = '', is_published = true) {
+                this.currentModuleId = moduleId;
+                this.currentLessonId = lessonId;
+                this.$refs.lessonForm.reset();
+                
+                document.getElementById('id_title').value = title;
+                document.getElementById('id_video_url').value = video_url;
+                document.getElementById('id_content').value = content;
+                document.getElementById('id_order').value = order;
+                document.getElementById('id_is_published').checked = is_published;
+                
+                this.$refs.lessonModalTitle.textContent = lessonId ? 'Edit Lesson' : 'Add New Lesson';
+                this.lessonModalOpen = true;
+            },
+
+            openDeleteModal(url, type) {
+                this.deleteUrl = url;
+                this.deleteType = type;
+                this.deleteModalOpen = true;
+            },
+
+            submitForm(event, type) {
+                const form = event.target;
+                const formData = new FormData(form);
+                let url;
+
+                if (type === 'module') {
+                    url = this.currentModuleId 
+                        ? `/instructor/api/module/update/${this.currentModuleId}/`
+                        : `{% url "module_create" course_slug=course.slug %}`;
+                } else {
+                    url = this.currentLessonId
+                        ? `/instructor/api/lesson/update/${this.currentLessonId}/`
+                        : `/instructor/api/lesson/create/${this.currentModuleId}/`;
+                }
+
+                fetch(url, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' }, body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.reload(); 
+                    } else {
+                        alert('An error occurred. Please check the form fields and try again.');
+                        console.error(data.errors);
+                    }
+                });
+            },
+
+            submitDelete() {
+                fetch(this.deleteUrl, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert('An error occurred while deleting.');
+                    }
+                });
+            }
+        }));
+    });
+</script>
+{% endblock %}
+

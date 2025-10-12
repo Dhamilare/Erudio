@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ course.title }} - Erudio{% endblock %}
+
+{% block content %}
+<div class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+
+            <!-- Main Content (Left Column) -->
+            <div class="lg:col-span-2">
+                <!-- Breadcrumbs -->
+                <nav class="text-sm font-medium text-gray-500 mb-4">
+                    <a href="{% url 'home' %}" class="hover:text-indigo-600">Home</a>
+                    <span class="mx-2">/</span>
+                    <a href="{% url 'course_list' %}" class="hover:text-indigo-600">Courses</a>
+                </nav>
+
+                <!-- Course Header -->
+                <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">{{ course.title }}</h1>
+                <p class="mt-4 text-lg text-gray-600">{{ course.short_description }}</p>
+
+                <!-- Instructor Info -->
+                <div class="mt-6 flex items-center">
+                    <img class="h-12 w-12 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text={{ course.instructor.first_name|slice:':1' }}{{ course.instructor.last_name|slice:':1' }}" alt="Instructor Avatar">
+                    <div class="ml-4">
+                        <p class="text-sm font-bold text-gray-800">Taught by</p>
+                        <p class="text-md font-medium text-indigo-600">{{ course.instructor.get_full_name }}</p>
+                    </div>
+                </div>
+
+                <!-- What You'll Learn -->
+                <div class="mt-12 bg-white p-6 border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">What you'll learn</h2>
+                    <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-gray-700">
+                        {% for outcome in course.learning_outcomes %}
+                            <li class="flex items-start"><i class="fas fa-check-circle text-indigo-500 mt-1 mr-3 flex-shrink-0"></i><span>{{ outcome }}</span></li>
+                        {% empty %}
+                            <li class="col-span-2 text-gray-500">Learning outcomes for this course will be available soon.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Course Curriculum (Interactive Accordion) -->
+                <div class="mt-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Course Curriculum</h2>
+                    <div class="space-y-4" x-data="{ activeAccordion: 1 }"> {# Open the first module by default #}
+                        {% for module in course.modules.all %}
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <button @click="activeAccordion = activeAccordion === {{ module.order }} ? null : {{ module.order }}" class="w-full text-left p-5 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset">
+                                <span class="text-lg font-semibold text-gray-900">{{ module.title }}</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300" :class="{ 'rotate-180': activeAccordion === {{ module.order }} }"></i>
+                            </button>
+                            <div x-show="activeAccordion === {{ module.order }}" x-collapse class="px-5">
+                                <ul class="py-2 divide-y divide-gray-100">
+                                    {% for lesson in module.lessons.all %}
+                                    <li class="py-3 flex items-center text-gray-700">
+                                        <i class="fas fa-play-circle text-gray-400 mr-4"></i>
+                                        <span>{{ lesson.title }}</span>
+                                    </li>
+                                    {% empty %}
+                                    <li class="py-3 text-gray-500">No lessons in this module yet.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500">Curriculum is being updated. Check back soon!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment Card (Right Column, Sticky) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-xl p-1 sticky top-24">
+                    <div class="relative group">
+                        <img class="w-full h-56 object-cover rounded-t-lg" src="{{ course.thumbnail_url|default:'https://placehold.co/600x400/818cf8/ffffff?text=Course+Preview' }}" alt="{{ course.title }} Preview">
+                        <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-play-circle text-white text-6xl"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <h2 class="text-4xl font-bold text-gray-800 text-center mb-4">
+                            {% if course.is_paid and course.price > 0 %}
+                                ₦{{ course.price|intcomma }}
+                            {% else %}
+                                <span class="text-green-600 text-3xl">Free</span>
+                            {% endif %}
+                        </h2>
+                        
+                        <a href="{% url 'initiate_payment' slug=course.slug %}"
+                           class="w-full block text-center bg-indigo-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-indigo-700 transition-transform transform hover:-translate-y-1 duration-300 shadow-lg">
+                            Enroll Now
+                        </a>
+                        
+                        <div class="mt-6">
+                            <h3 class="font-bold text-gray-800 mb-2">This course includes:</h3>
+                            <ul class="text-sm text-gray-600 space-y-2">
+                                <li class="flex items-center"><i class="fas fa-video w-5 mr-2 text-indigo-500"></i> On-demand video</li>
+                                <li class="flex items-center"><i class="fas fa-file-alt w-5 mr-2 text-indigo-500"></i> Articles & Resources</li>
+                                <li class="flex items-center"><i class="fas fa-mobile-alt w-5 mr-2 text-indigo-500"></i> Access on mobile and TV</li>
+                                <li class="flex items-center"><i class="fas fa-infinity w-5 mr-2 text-indigo-500"></i> Full lifetime access</li>
+                                <li class="flex items-center"><i class="fas fa-certificate w-5 mr-2 text-indigo-500"></i> Certificate of completion</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

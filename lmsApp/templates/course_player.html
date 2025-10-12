@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ current_lesson.title }} - {{ course.title }}{% endblock %}
+
+{% block content %}
+{% with enrollment=user.enrollment_set.first %}
+<div class="flex flex-col lg:flex-row min-h-screen bg-slate-100">
+    <!-- Sidebar: Course Curriculum -->
+    <div class="w-full lg:w-80 bg-white shadow-lg lg:min-h-screen flex-shrink-0">
+        <div class="p-4 border-b">
+            <a href="{% url 'course_detail' slug=course.slug %}" class="text-lg font-bold text-gray-800 hover:text-indigo-600 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                {{ course.title }}
+            </a>
+            <p class="text-sm text-gray-500 mt-1">Your Progress: {{ enrollment.get_progress_percentage }}%</p>
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ enrollment.get_progress_percentage }}%;"></div>
+            </div>
+        </div>
+        <div class="overflow-y-auto h-[calc(100vh-120px)]">
+            {% for module in course.modules.all %}
+            <div class="p-4 border-b">
+                <h3 class="font-semibold text-gray-700">{{ module.title }}</h3>
+            </div>
+            <ul class="divide-y divide-gray-200">
+                {% for lesson in module.lessons.all %}
+                <a href="{{ lesson.get_absolute_url }}" class="block">
+                    <li class="p-4 flex items-start transition-colors 
+                        {% if lesson.slug == current_lesson.slug %}
+                            bg-indigo-50 border-l-4 border-indigo-500
+                        {% endif %}
+                        {% if lesson in enrollment.completed_lessons.all and lesson.slug != current_lesson.slug %}
+                            bg-green-50
+                        {% endif %}
+                    ">
+                        {% if lesson in enrollment.completed_lessons.all %}
+                            <i class="fas fa-check-circle mt-1 mr-3 text-green-500"></i>
+                        {% else %}
+                            <i class="fas fa-play-circle mt-1 mr-3 {% if lesson.slug == current_lesson.slug %}text-indigo-600{% else %}text-gray-400{% endif %}"></i>
+                        {% endif %}
+                        <div>
+                            <p class="font-medium {% if lesson.slug == current_lesson.slug %}text-indigo-800{% else %}text-gray-800{% endif %}">{{ lesson.title }}</p>
+                            <span class="text-xs text-gray-500">12m</span>
+                        </div>
+                    </li>
+                </a>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Main Content: Video Player and Lesson Details -->
+    <div class="flex-grow p-4 sm:p-6 lg:p-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{{ current_lesson.title }}</h1>
+            <div class="aspect-w-16 aspect-h-9 rounded-lg shadow-2xl overflow-hidden mb-6 bg-black">
+                <iframe src="{{ current_lesson.video_url }}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="prose max-w-none text-gray-600 mb-6">
+                    {{ current_lesson.content|linebreaks|default:"No additional content for this lesson." }}
+                </div>
+                <!-- Mark as Complete Button -->
+                <form action="{% url 'mark_lesson_complete' course_slug=course.slug lesson_slug=current_lesson.slug %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10">
+                        Mark as Complete & Continue
+                        <i class="fas fa-arrow-right ml-3"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
+

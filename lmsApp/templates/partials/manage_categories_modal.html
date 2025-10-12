@@ -1,0 +1,35 @@
+<div x-show="categoriesModalOpen" x-transition.opacity x-cloak class="fixed z-50 inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center">
+    <div @click.away="categoriesModalOpen = false" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4">
+        <div class="flex justify-between items-center pb-3 border-b">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Manage Course Categories</h3>
+            <button @click="categoriesModalOpen = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
+        <div class="mt-4">
+            <!-- Add New Category Form -->
+            <form @submit.prevent="addCategory" class="flex items-start gap-3">
+                <div class="flex-grow">
+                    <label for="id_name" class="sr-only">Category Name</label>
+                    <input type="text" name="name" x-model="newCategoryName" required class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Data Science">
+                    <p x-show="errorMessage" x-text="errorMessage" class="text-red-600 text-sm mt-1"></p>
+                </div>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Add</button>
+            </form>
+
+            <!-- Existing Categories List -->
+            <div class="mt-6 max-h-60 overflow-y-auto">
+                <ul id="category-list" class="divide-y divide-gray-200">
+                    {% for category in categories %}
+                        {% include 'partials/category_item.html' with category=category %}
+                    {% empty %}
+                        <li id="no-categories-message" class="py-3 text-center text-gray-500">No categories created yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="mt-5 sm:mt-6 text-right">
+            <button @click="categoriesModalOpen = false; window.location.reload();" type="button" class="inline-flex justify-center w-full sm:w-auto rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
