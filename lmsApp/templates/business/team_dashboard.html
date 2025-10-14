@@ -3,7 +3,8 @@
 {% block title %}Team Dashboard - Erudio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen">
+{# This Alpine.js component now manages the state for the new confirmation modal #}
+<div x-data="{ removeModalOpen: false, memberToRemove: {} }" class="min-h-screen">
     <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="pb-8 border-b border-gray-200">
@@ -33,97 +34,34 @@
 
         <!-- KPI Cards -->
         <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Current Plan -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-5 flex items-center">
-                    <div class="flex-shrink-0 bg-gradient-to-tr from-purple-500 to-purple-400 rounded-lg p-4">
-                        <i class="fas fa-gem fa-2x text-white"></i>
-                    </div>
-                    <div class="ml-5 flex-1">
-                        <dt class="text-sm font-medium text-gray-500 truncate">Current Plan</dt>
-                        <dd class="text-2xl font-semibold text-gray-900">{{ team.plan.name|default:"N/A" }}</dd>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Team Members -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gradient-to-tr from-indigo-500 to-indigo-400 rounded-lg p-4">
-                            <i class="fas fa-users fa-2x text-white"></i>
-                        </div>
-                        <div class="ml-5 flex-1">
-                            <dt class="text-sm font-medium text-gray-500 truncate">Team Members</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{ team.members.count }} / {{ team.plan.max_members|default:"∞" }} Seats</dd>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ seat_usage_percentage }}%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Subscription Status -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-5 flex items-center">
-                    <div class="flex-shrink-0 {% if team.is_active %}bg-gradient-to-tr from-green-500 to-green-400{% else %}bg-gradient-to-tr from-red-500 to-red-400{% endif %} rounded-lg p-4">
-                        <i class="fas {% if team.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %} fa-2x text-white"></i>
-                    </div>
-                    <div class="ml-5 flex-1">
-                        <dt class="text-sm font-medium text-gray-500 truncate">Subscription</dt>
-                        <dd class="text-2xl font-semibold {% if team.is_active %}text-green-600{% else %}text-red-600{% endif %}">
-                            {% if team.is_active %}Active{% else %}Inactive{% endif %}
-                        </dd>
-                    </div>
-                </div>
-            </div>
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5 flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-purple-500 to-purple-400 rounded-lg p-4"><i class="fas fa-gem fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Current Plan</dt><dd class="text-2xl font-semibold text-gray-900">{{ team.plan.name|default:"N/A" }}</dd></div></div></div>
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-indigo-500 to-indigo-400 rounded-lg p-4"><i class="fas fa-users fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Team Members</dt><dd class="text-2xl font-semibold text-gray-900">{{ team.members.count }} / {{ team.plan.max_members|default:"∞" }} Seats</dd></div></div><div class="mt-2"><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-indigo-600 h-2 rounded-full" style="width: {{ seat_usage_percentage }}%;"></div></div></div></div></div>
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5 flex items-center"><div class="flex-shrink-0 {% if team.is_active %}bg-gradient-to-tr from-green-500 to-green-400{% else %}bg-gradient-to-tr from-red-500 to-red-400{% endif %} rounded-lg p-4"><i class="fas {% if team.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %} fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Subscription</dt><dd class="text-2xl font-semibold {% if team.is_active %}text-green-600{% else %}text-red-600{% endif %}">{% if team.is_active %}Active{% else %}Inactive{% endif %}</dd></div></div></div></div>
         </div>
 
         <!-- Main Content Grid -->
         <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Member List -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="p-6 border-b">
-                    <h2 class="text-lg font-medium text-gray-900">Team Members</h2>
-                </div>
-                <table class="min-w-full divide-y divide-gray-200">
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for member in team.members.all %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="{{ member.profile_picture_url|default:'https://placehold.co/100x100/E2E8F0/4A5568?text='|add:member.first_name|slice:':1'|add:member.last_name|slice:':1' }}" alt="">
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ member.get_full_name }}</div>
-                                        <div class="text-sm text-gray-500">{{ member.email }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{% url 'remove_team_member' member.id %}" class="text-red-600 hover:text-red-800" title="Remove Member">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="2" class="px-6 py-12 text-center text-sm text-gray-500">
-                                <i class="fas fa-user-plus text-4xl text-gray-300"></i>
-                                <p class="mt-2 font-semibold">Your team is empty</p>
-                                <p>Add your first member using the form.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="p-6 border-b"><h2 class="text-lg font-medium text-gray-900">Team Members</h2></div>
+                <table class="min-w-full divide-y divide-gray-200"><tbody class="bg-white divide-y divide-gray-200">
+                    {% for member in team.members.all %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="flex-shrink-0 h-10 w-10"><img class="h-10 w-10 rounded-full" src="{{ member.profile_picture_url|default:'https://placehold.co/100x100/E2E8F0/4A5568?text='|add:member.first_name|slice:':1'|add:member.last_name|slice:':1' }}" alt="Avatar for {{ member.get_full_name }}"></div><div class="ml-4"><div class="text-sm font-medium text-gray-900">{{ member.get_full_name|default:member.email }}</div><div class="text-sm text-gray-500">{{ member.email }}</div></div></div></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button @click="memberToRemove = { id: {{ member.id }}, name: '{{ member.get_full_name|default:member.email|escapejs }}' }; removeModalOpen = true" 
+                                    type="button" 
+                                    class="text-red-600 hover:text-red-800" 
+                                    title="Remove Member">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="px-6 py-12 text-center text-sm text-gray-500"><i class="fas fa-user-plus text-4xl text-gray-300"></i><p class="mt-2 font-semibold">Your team is empty</p><p>Add your first member using the form.</p></td></tr>
+                    {% endfor %}
+                </tbody></table>
             </div>
 
-            <!-- Add Member Form -->
             <div class="{% if not team.is_active %}opacity-50{% endif %}">
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900">Add New Member</h2>
@@ -131,19 +69,39 @@
                         {% csrf_token %}
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700">User's Email Address</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-envelope text-gray-400"></i>
-                                </div>
-                                <input type="email" name="email" id="email" required {% if not team.is_active %}disabled{% endif %} class="block w-full pl-10 border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
-                            </div>
+                            <div class="mt-1 relative rounded-md shadow-sm"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fas fa-envelope text-gray-400"></i></div><input type="email" name="email" id="email" required {% if not team.is_active %}disabled{% endif %} class="block w-full pl-10 border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"></div>
                         </div>
-                        <button type="submit" {% if not team.is_active %}disabled{% endif %} class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed">
-                            <i class="fas fa-plus mr-2"></i>
-                            Add to Team
-                        </button>
+                        <button type="submit" {% if not team.is_active %}disabled{% endif %} class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed"><i class="fas fa-plus mr-2"></i>Add to Team</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Member Confirmation Modal -->
+    <div x-show="removeModalOpen" x-transition.opacity x-cloak class="fixed z-50 inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center px-4">
+        <div @click.away="removeModalOpen = false" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Remove Team Member</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                            Are you sure you want to remove <strong x-text="memberToRemove.name"></strong> from your team? This action cannot be undone.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <a :href="`/team/remove-member/${memberToRemove.id}/`"
+                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                    Confirm Remove
+                </a>
+                <button @click="removeModalOpen = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>

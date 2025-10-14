@@ -39,6 +39,8 @@ class CustomUser(AbstractUser):
     email = models.EmailField('email address', unique=True)
     is_verified = models.BooleanField(default=False)
     is_instructor = models.BooleanField(default=False)
+    is_b2b_member = models.BooleanField(default=False)
+    is_invited = models.BooleanField(default=False)
     profile_picture_url = models.URLField(max_length=500, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     receives_new_course_emails = models.BooleanField(default=True)
@@ -325,6 +327,19 @@ class Team(models.Model):
         if self.is_active and self.subscription_ends and self.subscription_ends < timezone.now():
             return True
         return False
+    
+    def grant_all_members_course_access(self):
+        """
+        Enrolls all team members in all published courses.
+        This is the core of the 'all-access' B2B model.
+        """
+        all_courses = Course.objects.filter(is_published=True)
+        for member in self.members.all():
+            member.is_b2b_member = True # Mark as a business user
+            member.save()
+            for course in all_courses:
+                # Use get_or_create to safely enroll without creating duplicates
+                Enrollment.objects.get_or_create(student=member, course=course)
     
     def __str__(self):
         return f"{self.name} (Managed by {self.owner.email})"

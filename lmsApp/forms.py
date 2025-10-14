@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import *
+from django.contrib.auth.forms import SetPasswordForm
 
 User = get_user_model()
 
@@ -234,3 +235,11 @@ class TeamCreationForm(forms.ModelForm):
                 'placeholder': 'e.g., 123 Freedom Way, Lekki Phase 1, Lagos'
             }),
         }
+
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['new_password1'].help_text = ''
+        self.fields['new_password2'].help_text = ''

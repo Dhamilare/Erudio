@@ -7,7 +7,9 @@ import requests
 import re
 from weasyprint import HTML
 from io import BytesIO
-import os
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 
 
@@ -177,3 +179,40 @@ def send_completion_certificate_email(enrollment):
     email = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [enrollment.student.email])
     email.attach(filename, pdf_content, 'application/pdf')
     email.send()
+
+
+def send_subscription_confirmation_email(team):
+    """Sends a confirmation email to a team owner after they subscribe or renew."""
+    subject = f"Your Erudio for Business Subscription is Active!"
+    context = {'team': team, 'plan': team.plan, 'owner': team.owner}
+    send_templated_email(
+        'emails/subscription_confirmation.html',
+        subject,
+        [team.owner.email],
+        context
+    )
+
+
+def send_team_invitation_email(request, member, team):
+    """
+    Sends an invitation email to a new user created by a team owner,
+    allowing them to set their password.
+    """
+    subject = f"You've been invited to join the {team.name} team on Erudio!"
+    token = default_token_generator.make_token(member)
+    uid = urlsafe_base64_encode(force_bytes(member.pk))
+    relative_link = f"/accounts/reset/{uid}/{token}/"
+    activation_link = request.build_absolute_uri(relative_link)
+
+    context = {
+        'member': member,
+        'team': team,
+        'owner': team.owner,
+        'activation_link': activation_link,
+    }
+    send_templated_email(
+        'emails/team_invitation.html',
+        subject,
+        [member.email],
+        context
+    )

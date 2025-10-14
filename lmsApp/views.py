@@ -3,16 +3,18 @@ from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
-from django.contrib.auth import login, logout, update_session_auth_hash
+from django.contrib.auth import login, logout, update_session_auth_hash, authenticate
 from .models import *
 from .forms import *
-from .utils import send_templated_email, PaystackAPI, get_youtube_embed_url, send_completion_certificate_email, send_enrollment_confirmation_email
-from django.contrib.auth.decorators import login_required
+from .utils import *
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.db.models import Sum, Q, Count
 from django.db.models.functions import TruncMonth 
 import datetime
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.sites.shortcuts import get_current_site
 
 
 # --- CUSTOM DECORATORS ---
@@ -84,20 +86,47 @@ def register_view(request):
         
     return render(request, 'accounts/register.html', {'form': form})
 
+
 def login_view(request):
-    """Handles user login."""
+    """
+    Handles user login with special checks for unverified, invited, and inactive B2B users.
+    """
     if request.user.is_authenticated:
         return redirect('home')
-        
+
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
+        
+        email = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        # We fetch the user object first to perform our custom checks.
+        user_check = CustomUser.objects.filter(email__iexact=email).first()
+
+        if user_check:
+            # Case 1: The user is an invited B2B member who hasn't set their password yet.
+            if user_check.is_invited and not user_check.has_usable_password():
+                 messages.warning(request, "This account was created via an invitation. Please use the link in your invitation email to set your password.")
+                 return redirect('login')
+
+            # Case 2: The user is a B2B member whose account has been deactivated (subscription expired).
+            if not user_check.is_active and user_check.is_b2b_member:
+                user_auth = authenticate(request, email=email, password=password)
+                if user_auth is None:
+                    messages.error(request, "Your account is inactive. Your team's subscription may have expired. Please contact your team manager.")
+                    return render(request, 'accounts/login.html', {'form': form})
+
+            # Case 3: The user exists but has not verified their email.
+            if not user_check.is_verified:
+                # We check the password is correct before showing the verification error.
+                if user_check.check_password(password):
+                    messages.warning(request, 'Your account is not verified. Please check your email for the activation link.')
+                    return redirect('login')
+
+        # If all our custom checks pass, we proceed with Django's standard validation.
+        # This will handle the generic "incorrect password" error for us.
         if form.is_valid():
             user = form.get_user()
-            
-            if not user.is_verified:
-                messages.warning(request, 'Your account is not verified. Please check your email for the activation link.')
-                return redirect('login')
-            
             login(request, user)
             messages.success(request, f'Welcome back, {user.first_name}!')
             next_page = request.GET.get('next')
@@ -106,6 +135,7 @@ def login_view(request):
         form = LoginForm()
 
     return render(request, 'accounts/login.html', {'form': form})
+
 
 @login_required
 def logout_view(request):
@@ -138,6 +168,51 @@ def verify_email_view(request, token):
     except EmailVerificationToken.DoesNotExist:
         messages.error(request, 'The verification link is invalid or has already been used.')
         return redirect('home')
+
+
+def send_custom_password_reset_email(user, request):
+    current_site = get_current_site(request)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+
+    context = {
+        "protocol": "https" if request.is_secure() else "http",
+        "domain": current_site.domain,
+        "uid": uid,
+        "token": token,
+        "user": user
+    }
+
+    send_templated_email(
+        template_name="accounts/password_reset_email.html",
+        subject="Your Erudio Password Reset Request",
+        recipient_list=[user.email],
+        context=context
+    )
+    
+
+def custom_password_reset(request):
+    if request.method == "POST":
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            users = User.objects.filter(email=email, is_active=True)
+            if users.exists():
+                for user in users:
+                    send_custom_password_reset_email(user, request)
+            return redirect('password_reset_done')
+            
+    else:
+        form = PasswordResetForm()
+
+    context = {
+        "form": form,
+    }
+    return render(request, "accounts/password_reset.html", context)
+
+
+
+
 
 # --- PUBLIC COURSE VIEWS ---
 
@@ -707,8 +782,9 @@ def for_business_view(request):
 @login_required
 def team_setup_view(request):
     """
-    Allows a new team owner to name their team and provide business details
-    after a successful subscription payment.
+    Allows a new team owner to provide their business details.
+    This view creates the team, activates the subscription, grants course access,
+    and sends the confirmation email.
     """
     plan_id = request.session.get('pending_subscription_plan_id')
     
@@ -722,15 +798,25 @@ def team_setup_view(request):
     if request.method == 'POST':
         form = TeamCreationForm(request.POST)
         if form.is_valid():
-            # Create the team, linking the owner and setting the name from the form
-            team = form.save(commit=False)
-            team.owner = request.user
-            team.plan = plan
+            team, created = Team.objects.get_or_create(
+                owner=request.user,
+                defaults={'name': form.cleaned_data['name']}
+            )
             
-            # Activate the subscription
+            # Update team details from the form
+            team.name = form.cleaned_data['name']
+            team.phone_number = form.cleaned_data['phone_number']
+            team.address = form.cleaned_data['address']
+            
+            # Activate or Renew the subscription
+            team.plan = plan
             team.is_active = True
             team.subscription_ends = timezone.now() + datetime.timedelta(days=30)
             team.save()
+            
+            # Grant all-access to existing team members
+            team.grant_all_members_course_access()
+            send_subscription_confirmation_email(team)
             
             # Clean up the session variable
             del request.session['pending_subscription_plan_id']
@@ -743,10 +829,12 @@ def team_setup_view(request):
     context = {'form': form, 'plan': plan}
     return render(request, 'business/team_setup.html', context)
 
+
+
 @login_required
 def team_dashboard_view(request):
     """
-    Displays the management dashboard for a team owner, allowing them to add members.
+    Displays the management dashboard and handles inviting/adding members.
     """
     try:
         team = request.user.owned_team
@@ -755,26 +843,52 @@ def team_dashboard_view(request):
         return redirect('for_business')
 
     if request.method == 'POST':
-        email_to_add = request.POST.get('email')
+        email_to_add = request.POST.get('email', '').strip()
         if email_to_add:
-            try:
-                user_to_add = CustomUser.objects.get(email__iexact=email_to_add)
-                
-                if user_to_add == team.owner:
-                     messages.warning(request, "You cannot add the team owner as a member.")
-                elif team.members.count() >= team.plan.max_members:
-                    messages.error(request, f"You have reached the maximum of {team.plan.max_members} members for your plan.")
-                else:
-                    team.members.add(user_to_add)
-                    messages.success(request, f"Successfully added {user_to_add.get_full_name()} to your team.")
+            # First, check if the team's subscription is active and has space
+            if not team.is_active:
+                 messages.error(request, "Your team's subscription is inactive. Please renew to add members.")
+                 return redirect('team_dashboard')
+            if team.members.count() >= team.plan.max_members:
+                messages.error(request, f"You have reached the maximum of {team.plan.max_members} members for your plan.")
+                return redirect('team_dashboard')
 
-            except CustomUser.DoesNotExist:
-                messages.error(request, f"No user with the email '{email_to_add}' was found on Erudio.")
+            # Use get_or_create to either find an existing user or create a new one
+            user_to_add, created = CustomUser.objects.get_or_create(
+                email__iexact=email_to_add,
+                defaults={'email': email_to_add.lower()}
+            )
+
+            if user_to_add == team.owner:
+                messages.warning(request, "You cannot add the team owner as a member.")
+            elif user_to_add in team.members.all():
+                 messages.warning(request, f"{user_to_add.get_full_name() or user_to_add.email} is already a member of your team.")
+            else:
+                if created:
+                    # This is a brand new user. Set them up for invitation.
+                    user_to_add.set_unusable_password()
+                    user_to_add.is_active = True # B2B users are active by default
+                    user_to_add.is_verified = True # B2B users are implicitly verified
+                    user_to_add.is_invited = True
+                    user_to_add.save()
+                    
+                    # Send them an invitation email to set their password
+                    send_team_invitation_email(request, user_to_add, team)
+                    messages.success(request, f"An invitation has been sent to {user_to_add.email}.")
+                else:
+                    messages.success(request, f"Successfully added existing user {user_to_add.get_full_name() or user_to_add.email} to your team.")
+                
+                # Add user to the team and grant access
+                team.members.add(user_to_add)
+                user_to_add.is_b2b_member = True
+                user_to_add.save()
+                team.grant_all_members_course_access()
+
         else:
             messages.error(request, "Please provide an email address.")
         
         return redirect('team_dashboard')
-    
+        
     seat_usage_percentage = 0
     if team.plan and team.plan.max_members > 0:
         seat_usage_percentage = (team.members.count() / team.plan.max_members) * 100
@@ -783,7 +897,6 @@ def team_dashboard_view(request):
         'team': team,
         'seat_usage_percentage': seat_usage_percentage,
     }
-
     return render(request, 'business/team_dashboard.html', context)
 
 
