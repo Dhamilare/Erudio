@@ -201,7 +201,7 @@ def send_team_invitation_email(request, member, team):
     subject = f"You've been invited to join the {team.name} team on Erudio!"
     token = default_token_generator.make_token(member)
     uid = urlsafe_base64_encode(force_bytes(member.pk))
-    relative_link = f"/accounts/reset/{uid}/{token}/"
+    relative_link = f"/reset/{uid}/{token}/"
     activation_link = request.build_absolute_uri(relative_link)
 
     context = {

@@ -3,7 +3,6 @@
 {% block title %}Team Dashboard - Erudio{% endblock %}
 
 {% block content %}
-{# This Alpine.js component now manages the state for the new confirmation modal #}
 <div x-data="{ removeModalOpen: false, memberToRemove: {} }" class="min-h-screen">
     <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -41,6 +40,7 @@
 
         <!-- Main Content Grid -->
         <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Member List -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-6 border-b"><h2 class="text-lg font-medium text-gray-900">Team Members</h2></div>
                 <table class="min-w-full divide-y divide-gray-200"><tbody class="bg-white divide-y divide-gray-200">
@@ -62,15 +62,13 @@
                 </tbody></table>
             </div>
 
+            <!-- Add Member Form -->
             <div class="{% if not team.is_active %}opacity-50{% endif %}">
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900">Add New Member</h2>
                     <form action="{% url 'team_dashboard' %}" method="post" class="mt-4 space-y-4">
                         {% csrf_token %}
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">User's Email Address</label>
-                            <div class="mt-1 relative rounded-md shadow-sm"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fas fa-envelope text-gray-400"></i></div><input type="email" name="email" id="email" required {% if not team.is_active %}disabled{% endif %} class="block w-full pl-10 border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"></div>
-                        </div>
+                        <div><label for="email" class="block text-sm font-medium text-gray-700">User's Email Address</label><div class="mt-1 relative rounded-md shadow-sm"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fas fa-envelope text-gray-400"></i></div><input type="email" name="email" id="email" required {% if not team.is_active %}disabled{% endif %} class="block w-full pl-10 border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"></div></div>
                         <button type="submit" {% if not team.is_active %}disabled{% endif %} class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed"><i class="fas fa-plus mr-2"></i>Add to Team</button>
                     </form>
                 </div>
@@ -82,26 +80,15 @@
     <div x-show="removeModalOpen" x-transition.opacity x-cloak class="fixed z-50 inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center px-4">
         <div @click.away="removeModalOpen = false" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto">
             <div class="sm:flex sm:items-start">
-                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
-                </div>
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10"><i class="fas fa-exclamation-triangle text-red-600"></i></div>
                 <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <h3 class="text-lg leading-6 font-medium text-gray-900">Remove Team Member</h3>
-                    <div class="mt-2">
-                        <p class="text-sm text-gray-500">
-                            Are you sure you want to remove <strong x-text="memberToRemove.name"></strong> from your team? This action cannot be undone.
-                        </p>
-                    </div>
+                    <div class="mt-2"><p class="text-sm text-gray-500">Are you sure you want to remove <strong x-text="memberToRemove.name"></strong> from your team? This action cannot be undone.</p></div>
                 </div>
             </div>
             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                <a :href="`/team/remove-member/${memberToRemove.id}/`"
-                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
-                    Confirm Remove
-                </a>
-                <button @click="removeModalOpen = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
-                    Cancel
-                </button>
+                <a :href="`/team/remove-member/${memberToRemove.id}/`" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">Confirm Remove</a>
+                <button @click="removeModalOpen = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Cancel</button>
             </div>
         </div>
     </div>
