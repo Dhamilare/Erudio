@@ -198,5 +198,5 @@ if USE_AZURE_STORAGE and not DEBUG:
 AZURE_OVERWRITE_FILES = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://-vs63.onrender.com"
+    "https://erudio.onrender.com"
 ]
