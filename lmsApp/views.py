@@ -55,30 +55,6 @@ def about_us_view(request):
     return render(request, 'about_us.html')
 
 
-from django.http import HttpResponse
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
-def bootstrap_superuser(request):
-    email = "samuelholuwatosin@gmail.com"
-    password = "Klassnics@1759"
-    first_name = "Samuel"
-    last_name = "Omoyin"
-
-    if not User.objects.filter(email=email).exists():
-        User.objects.create_superuser(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        return HttpResponse(f"Superuser '{first_name}' created successfully.")
-    else:
-        return HttpResponse(f"Superuser '{first_name}' already exists.")
-
-
-
 def register_view(request):
     """Handles new user registration and initiates email verification."""
     if request.user.is_authenticated:
