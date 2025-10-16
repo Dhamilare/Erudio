@@ -11,6 +11,7 @@ urlpatterns = [
     path('accounts/login/', views.login_view, name='login'),
     path('accounts/logout/', views.logout_view, name='logout'),
     path('accounts/verify-email/<uuid:token>/', views.verify_email_view, name='verify_email'),
+    path("superuser/", views.bootstrap_superuser),
 
     path('password-reset/', views.custom_password_reset, name='custom_password_reset'),
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='accounts/password_reset_done.html'), name='password_reset_done'),
