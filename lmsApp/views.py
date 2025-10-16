@@ -61,24 +61,21 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 def bootstrap_superuser(request):
-    # change these values before deploying!
-    username = "Dhamilare"
     email = "samuelholuwatosin@gmail.com"
     password = "Klassnics@1759"
     first_name = "Samuel"
     last_name = "Omoyin"
 
-    if not User.objects.filter(username=username).exists():
+    if not User.objects.filter(email=email).exists():
         User.objects.create_superuser(
-            username=username,
             email=email,
             password=password,
             first_name=first_name,
             last_name=last_name,
         )
-        return HttpResponse(f"Superuser '{username}' created successfully.")
+        return HttpResponse(f"Superuser '{first_name}' created successfully.")
     else:
-        return HttpResponse(f"Superuser '{username}' already exists.")
+        return HttpResponse(f"Superuser '{first_name}' already exists.")
 
 
 
