@@ -8,7 +8,7 @@
         <!-- Header -->
         <div class="pb-8 border-b border-gray-200">
             <h1 class="text-3xl font-bold tracking-tight text-gray-900">Team Dashboard</h1>
-            <p class="mt-1 text-lg text-gray-600">Manage your team members for <span class="font-semibold text-indigo-600">{{ team.name }}</span>.</p>
+            <p class="mt-1 text-lg text-gray-600">Manage your team and track their learning progress for <span class="font-semibold text-indigo-600">{{ team.name }}</span>.</p>
         </div>
 
         <!-- Subscription Expired Alert -->
@@ -32,39 +32,72 @@
         {% endif %}
 
         <!-- KPI Cards -->
-        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Current Plan -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5 flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-purple-500 to-purple-400 rounded-lg p-4"><i class="fas fa-gem fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Current Plan</dt><dd class="text-2xl font-semibold text-gray-900">{{ team.plan.name|default:"N/A" }}</dd></div></div></div>
+            <!-- Team Members -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0 bg-gradient-to-tr from-indigo-500 to-indigo-400 rounded-lg p-4"><i class="fas fa-users fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Team Members</dt><dd class="text-2xl font-semibold text-gray-900">{{ team.members.count }} / {{ team.plan.max_members|default:"∞" }} Seats</dd></div></div><div class="mt-2"><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-indigo-600 h-2 rounded-full" style="width: {{ seat_usage_percentage }}%;"></div></div></div></div></div>
+            <!-- Average Progress KPI -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
+                <div class="p-5 flex items-center">
+                    <div class="flex-shrink-0 bg-gradient-to-tr from-blue-500 to-blue-400 rounded-lg p-4">
+                        <i class="fas fa-tasks fa-2x text-white"></i>
+                    </div>
+                    <div class="ml-5 flex-1">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Avg. Team Progress</dt>
+                        <dd class="text-2xl font-semibold text-gray-900">{{ average_progress|floatformat:0 }}%</dd>
+                    </div>
+                </div>
+            </div>
+            <!-- Subscription Status -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl"><div class="p-5 flex items-center"><div class="flex-shrink-0 {% if team.is_active %}bg-gradient-to-tr from-green-500 to-green-400{% else %}bg-gradient-to-tr from-red-500 to-red-400{% endif %} rounded-lg p-4"><i class="fas {% if team.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %} fa-2x text-white"></i></div><div class="ml-5 flex-1"><dt class="text-sm font-medium text-gray-500 truncate">Subscription</dt><dd class="text-2xl font-semibold {% if team.is_active %}text-green-600{% else %}text-red-600{% endif %}">{% if team.is_active %}Active{% else %}Inactive{% endif %}</dd></div></div></div></div>
         </div>
 
         <!-- Main Content Grid -->
         <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Member List -->
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="p-6 border-b"><h2 class="text-lg font-medium text-gray-900">Team Members</h2></div>
-                <table class="min-w-full divide-y divide-gray-200"><tbody class="bg-white divide-y divide-gray-200">
-                    {% for member in team.members.all %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="flex-shrink-0 h-10 w-10"><img class="h-10 w-10 rounded-full" src="{{ member.profile_picture_url|default:'https://placehold.co/100x100/E2E8F0/4A5568?text='|add:member.first_name|slice:':1'|add:member.last_name|slice:':1' }}" alt="Avatar for {{ member.get_full_name }}"></div><div class="ml-4"><div class="text-sm font-medium text-gray-900">{{ member.get_full_name|default:member.email }}</div><div class="text-sm text-gray-500">{{ member.email }}</div></div></div></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button @click="memberToRemove = { id: {{ member.id }}, name: '{{ member.get_full_name|default:member.email|escapejs }}' }; removeModalOpen = true" 
-                                    type="button" 
-                                    class="text-red-600 hover:text-red-800" 
-                                    title="Remove Member">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="2" class="px-6 py-12 text-center text-sm text-gray-500"><i class="fas fa-user-plus text-4xl text-gray-300"></i><p class="mt-2 font-semibold">Your team is empty</p><p>Add your first member using the form.</p></td></tr>
-                    {% endfor %}
-                </tbody></table>
+            <!-- Team Progress Report -->
+            <div class="lg:col-span-2 space-y-6">
+                <h2 class="text-xl font-semibold text-gray-900">Team Progress Report</h2>
+                {% for member in members %}
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4 sm:p-6 border-b flex justify-between items-center">
+                        <div class="flex items-center">
+                            {% if member.profile_picture_url %}
+                                <img class="h-10 w-10 rounded-full object-cover" src="{{ member.profile_picture_url }}" alt="Avatar for {{ member.get_full_name }}">
+                            {% else %}
+                                <div class="h-10 w-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                                    {{ member.first_name|slice:":1" }}{{ member.last_name|slice:":1" }}
+                                </div>
+                            {% endif %}
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ member.get_full_name|default:member.email }}</div>
+                                <div class="text-sm text-gray-500">{{ member.email }}</div>
+                            </div>
+                        </div>
+                        <button @click="memberToRemove = { id: {{ member.id }}, name: '{{ member.get_full_name|default:member.email|escapejs }}' }; removeModalOpen = true" type="button" class="text-red-600 hover:text-red-800" title="Remove Member"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                    <ul class="divide-y divide-gray-200">
+                        {% for enrollment in member.enrollments.all %}
+                        <li class="px-4 py-3 sm:px-6">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-indigo-600 truncate">{{ enrollment.course.title }}</p>
+                                <p class="text-sm text-gray-500">{{ enrollment.get_progress_percentage }}%</p>
+                            </div>
+                            <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5"><div class="bg-indigo-600 h-1.5 rounded-full" style="width: {{ enrollment.get_progress_percentage }}%;"></div></div>
+                        </li>
+                        {% empty %}
+                        <li class="px-4 py-6 sm:px-6 text-center text-sm text-gray-500">This member is not enrolled in any courses.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% empty %}
+                <div class="bg-white rounded-xl shadow-lg p-12 text-center"><i class="fas fa-user-plus text-4xl text-gray-300"></i><p class="mt-2 font-semibold">Your team is empty</p><p class="text-sm text-gray-500">Add your first member to start tracking progress.</p></div>
+                {% endfor %}
             </div>
 
             <!-- Add Member Form -->
             <div class="{% if not team.is_active %}opacity-50{% endif %}">
-                <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-24">
                     <h2 class="text-lg font-medium text-gray-900">Add New Member</h2>
                     <form action="{% url 'team_dashboard' %}" method="post" class="mt-4 space-y-4">
                         {% csrf_token %}

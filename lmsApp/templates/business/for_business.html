@@ -25,9 +25,13 @@
                     <p class="mt-1 text-sm text-gray-500">Up to {{ plan.max_members }} users</p>
                     
                     {% if user.is_authenticated %}
-                        <a href="{% url 'initiate_team_subscription' plan.id %}" class="mt-6 block w-full bg-indigo-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-indigo-700">Choose Plan</a>
+                        <a href="{% url 'initiate_team_subscription' plan.id %}" class="mt-6 block w-full bg-indigo-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-indigo-700">
+                            <i class="fas fa-shopping-cart mr-2"></i>Purchase Plan
+                        </a>
                     {% else %}
-                        <a href="{% url 'login' %}?next={% url 'for_business' %}" class="mt-6 block w-full bg-indigo-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-indigo-700">Login to Subscribe</a>
+                        <a href="{% url 'login' %}?next={% url 'for_business' %}" class="mt-6 block w-full bg-indigo-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-indigo-700">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login to Subscribe
+                        </a>
                     {% endif %}
                 </div>
                 <div class="pt-6 pb-8 px-6">

@@ -6,6 +6,7 @@ from .forms import CustomSetPasswordForm
 urlpatterns = [
     # --- CORE & AUTHENTICATION URLs ---
     path('', views.home_view, name='home'),
+    path('about/', views.about_us_view, name='about_us'),
     path('accounts/register/', views.register_view, name='register'),
     path('accounts/login/', views.login_view, name='login'),
     path('accounts/logout/', views.logout_view, name='logout'),

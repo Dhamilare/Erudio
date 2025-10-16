@@ -51,6 +51,9 @@ def home_view(request):
     context = {'courses': courses}
     return render(request, 'home.html', context)
 
+def about_us_view(request):
+    return render(request, 'about_us.html')
+
 def register_view(request):
     """Handles new user registration and initiates email verification."""
     if request.user.is_authenticated:
@@ -888,6 +891,19 @@ def team_dashboard_view(request):
             messages.error(request, "Please provide an email address.")
         
         return redirect('team_dashboard')
+    
+    # Fetch all members and their related enrollments efficiently
+    members = team.members.all().prefetch_related('enrollments__course', 'enrollments__completed_lessons')
+    all_enrollments = Enrollment.objects.filter(student__in=members)
+
+    # Calculate the overall average progress percentage for the team
+    total_progress = 0
+    if all_enrollments.exists():
+        for enrollment in all_enrollments:
+            total_progress += enrollment.get_progress_percentage
+        average_progress = total_progress / all_enrollments.count()
+    else:
+        average_progress = 0
         
     seat_usage_percentage = 0
     if team.plan and team.plan.max_members > 0:
@@ -896,6 +912,8 @@ def team_dashboard_view(request):
     context = {
         'team': team,
         'seat_usage_percentage': seat_usage_percentage,
+        'members': members,
+        'average_progress': average_progress,
     }
     return render(request, 'business/team_dashboard.html', context)
 
