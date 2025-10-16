@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+import dj_database_url
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -74,13 +75,24 @@ WSGI_APPLICATION = 'Erudio.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
+if config('DATABASE_URL', default=None):
+    # Production: Use Postgres
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # Development: Use SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -117,6 +129,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -141,3 +159,44 @@ DEFAULT_FROM_EMAIL=config('DEFAULT_FROM_EMAIL')
 
 PAYSTACK_PUBLIC_KEY=config("PAYSTACK_PUBLIC_KEY")
 PAYSTACK_SECRET_KEY=config("PAYSTACK_SECRET_KEY")
+
+
+USE_AZURE_STORAGE = config("USE_AZURE_STORAGE", default=not DEBUG, cast=bool)
+
+if USE_AZURE_STORAGE and not DEBUG:
+    # Azure Blob credentials
+    AZURE_ACCOUNT_NAME = config("AZURE_ACCOUNT_NAME")
+    AZURE_ACCOUNT_KEY = config("AZURE_ACCOUNT_KEY")
+    AZURE_CONNECTION_STRING = config("AZURE_CONNECTION_STRING")
+    AZURE_STATIC_CONTAINER = config("AZURE_STATIC_CONTAINER", default="staticfiles") 
+    AZURE_MEDIA_CONTAINER = config("AZURE_MEDIA_CONTAINER", default="mediafiles")
+
+    STATIC_URL = f"https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_STATIC_CONTAINER}/"
+    MEDIA_URL = f"https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_MEDIA_CONTAINER}/"
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "OPTIONS": {
+                "account_name": AZURE_ACCOUNT_NAME,
+                "account_key": AZURE_ACCOUNT_KEY,
+                "connection_string": AZURE_CONNECTION_STRING,
+                "azure_container": AZURE_MEDIA_CONTAINER,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "OPTIONS": {
+                "account_name": AZURE_ACCOUNT_NAME,
+                "account_key": AZURE_ACCOUNT_KEY,
+                "connection_string": AZURE_CONNECTION_STRING,
+                "azure_container": AZURE_STATIC_CONTAINER,
+            },
+        },
+    }
+
+AZURE_OVERWRITE_FILES = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://-vs63.onrender.com"
+]
