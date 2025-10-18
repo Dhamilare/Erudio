@@ -245,7 +245,6 @@ def course_list_view(request):
     return render(request, 'course_list.html', context)
 
 
-@login_required
 def course_detail_view(request, slug):
     course = get_object_or_404(Course.objects.prefetch_related('modules__lessons'), slug=slug, is_published=True)
     
