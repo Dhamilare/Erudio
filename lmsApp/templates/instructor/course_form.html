@@ -84,6 +84,14 @@
                             {{ form.category }}
                             {% if form.category.errors %}<p class="mt-2 text-sm text-red-600">{{ form.categories.errors|striptags }}</p>{% endif %}
                         </div>
+
+                        <!-- Difficulty Field -->
+                        <div>
+                            <label for="{{ form.difficulty.id_for_label }}" class="block text-sm font-medium text-gray-700">Difficulty Level</label>
+                            <p class="text-xs text-gray-500 mb-1">Select the appropriate level.</p>
+                            {{ form.difficulty }}
+                             {% if form.difficulty.errors %}<p class="mt-2 text-sm text-red-600">{{ form.difficulty.errors|striptags }}</p>{% endif %}
+                        </div>
                         
                         <!-- Price -->
                         <div>
