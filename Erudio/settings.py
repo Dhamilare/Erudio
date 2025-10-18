@@ -153,7 +153,7 @@ ENVIRONMENT = config('ENVIRONMENT', default='local')
 
 if ENVIRONMENT == 'production':
     # SENDGRID CONFIGURATION (for Render)
-    EMAIL_BACKEND = 'sendgrid_backend.SendGridBackend'
+    EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
     SENDGRID_API_KEY = config('SENDGRID_API_KEY')
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 else:
