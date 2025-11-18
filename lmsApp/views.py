@@ -15,7 +15,27 @@ import datetime
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpResponse
 
+
+
+def bootstrap_superuser(request):
+    # change these values before deploying!
+    email = "samuelholuwatosin@gmail.com"
+    password = "Klassnics@1759"
+    first_name = "Samuel"
+    last_name = "Omoyin"
+
+    if not User.objects.filter(email=email).exists():
+        User.objects.create_superuser(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        return HttpResponse(f"Superuser '{email}' created successfully.")
+    else:
+        return HttpResponse(f"Superuser '{email}' already exists.")
 
 # --- CUSTOM DECORATORS ---
 
@@ -279,25 +299,21 @@ def lesson_detail_view(request, course_slug, lesson_slug):
     """
     course = get_object_or_404(Course.objects.prefetch_related('modules__lessons'), slug=course_slug, is_published=True)
     
-    # Robustly fetch the specific enrollment record for this user and course.
     enrollment = get_object_or_404(Enrollment, student=request.user, course=course)
     
     current_lesson = get_object_or_404(Lesson, slug=lesson_slug, module__course=course)
 
-    # Build a list of all modules for the sidebar, calculating their lock status.
     modules_with_status = []
-    previous_module_complete = True  # The first module is always considered unlocked.
-    for module in course.modules.all(): # Assumes modules are ordered by the 'order' field.
+    previous_module_complete = True  
+    for module in course.modules.all(): 
         is_unlocked = previous_module_complete
         modules_with_status.append({
             'module': module,
             'is_unlocked': is_unlocked
         })
-        # The lock status of the *next* module depends on the completion of the *current* one.
         if not enrollment.is_module_complete(module):
             previous_module_complete = False
 
-    # Security Check: Prevent users from accessing lessons in a locked module via the URL.
     current_module_is_unlocked = False
     for m_data in modules_with_status:
         if m_data['module'] == current_lesson.module:
@@ -306,11 +322,10 @@ def lesson_detail_view(request, course_slug, lesson_slug):
             
     if not current_module_is_unlocked:
         messages.error(request, "You must complete the previous module to access this lesson.")
-        # Redirect the user to the correct next lesson they should be on.
         next_lesson_to_complete = enrollment.get_next_lesson()
         if next_lesson_to_complete:
             return redirect(next_lesson_to_complete.get_absolute_url())
-        return redirect('my_courses') # Failsafe redirect.
+        return redirect('my_courses')
 
     embed_url = get_youtube_embed_url(current_lesson.video_url)
     context = {
@@ -348,7 +363,7 @@ def mark_lesson_complete_view(request, course_slug, lesson_slug):
         except ValueError:
             return redirect('my_courses')
 
-    return redirect('home')  # Should not be accessed via GET
+    return redirect('home') 
 
 
 # --- PAYMENT & ENROLLMENT VIEWS ---
