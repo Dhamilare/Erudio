@@ -15,27 +15,7 @@ import datetime
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.shortcuts import get_current_site
-from django.http import HttpResponse
 
-
-
-def bootstrap_superuser(request):
-    # change these values before deploying!
-    email = "samuelholuwatosin@gmail.com"
-    password = "Klassnics@1759"
-    first_name = "Samuel"
-    last_name = "Omoyin"
-
-    if not User.objects.filter(email=email).exists():
-        User.objects.create_superuser(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        return HttpResponse(f"Superuser '{email}' created successfully.")
-    else:
-        return HttpResponse(f"Superuser '{email}' already exists.")
 
 # --- CUSTOM DECORATORS ---
 
